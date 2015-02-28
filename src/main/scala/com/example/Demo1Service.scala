@@ -1,7 +1,6 @@
 package com.example
 
 import spray.http._
-import spray.routing
 import spray.routing._
 import MediaTypes._
 import StatusCodes._
@@ -45,7 +44,6 @@ trait Demo1Service extends HttpService {
         path("continue"){
           complete("continue")
         }
-
   }
 
   val handledRoute = pathPrefix("handled") {
