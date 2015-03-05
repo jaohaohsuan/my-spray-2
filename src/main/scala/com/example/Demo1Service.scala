@@ -7,7 +7,7 @@ import StatusCodes._
 
 trait Demo1Service extends HttpService {
 
-  var demo1Route = path("") {
+  val demo1Route = path("") {
     get {
       respondWithMediaType(`text/html`) {
         complete {

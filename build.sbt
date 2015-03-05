@@ -16,7 +16,7 @@ libraryDependencies ++= {
   Seq(
     "io.spray"           %% "spray-can"                     % sprayVersion,
     "io.spray"           %% "spray-routing"                 % sprayVersion,
-    "io.spray"           %% "spray-httpx"                 % sprayVersion,
+    "io.spray"           %% "spray-httpx"                   % sprayVersion,
     "io.spray"           %% "spray-testkit"                 % sprayVersion  % "test",
     "com.typesafe.akka"  %% "akka-actor"                    % akkaVersion,
     "com.typesafe.akka"  %% "akka-testkit"                  % akkaVersion   % "test",
