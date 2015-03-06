@@ -3,12 +3,16 @@ package com.example
 import akka.actor._
 import akka.persistence._
 
-trait state
+trait State
+trait Command
 trait Event
+
+case object Uninitialized extends State
 
 object UserAggregate {
   
-  case class Initialize(pass: String) extends state
+  case class User(name: String, pass: String) extends State
+  case class Initialize(pass: String) extends Command
   case class UserInitialized(encryptedPass: String) extends Event
 
   def props(id: String): Props = Props(new UserAggregate(id))
@@ -19,6 +23,8 @@ class UserAggregate(id: String) extends PersistentActor {
   import UserAggregate._
 
   override def persistenceId = id
+
+  var state: State = Uninitialized
 
   val initial: Receive = {
     case Initialize(pass) =>
@@ -34,15 +40,16 @@ class UserAggregate(id: String) extends PersistentActor {
   def afterEventPersisted(evt: Event): Unit = evt match {
     case UserInitialized(pass) =>
       context.become(created)
+      state = User(id, pass)
+      sender ! state
   }
 
-  def receiveCommand = {
+  val receiveCommand: Receive = initial
+
+  val receiveRecover: Receive = {
     case _ => 
   }
 
-  def receiveRecover = {
-    case _ => 
-  }
 }
 
 

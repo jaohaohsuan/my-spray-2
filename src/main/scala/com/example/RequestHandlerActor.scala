@@ -1,28 +1,15 @@
 package com.example
 
 import akka.actor._
-import spray.routing._
 import spray.http.StatusCodes._
-import net.hamnaberg.json.collection._
-import spray.httpx._
+import spray.routing._
+
 import scala.concurrent.duration._
 
-case class RegisterUserRequestActor(
-  rtx              : RequestContext,
-  aggregateManager : ActorRef,
-  message          : AggregateManager.Command) extends RequestHandler {
 
-  def processResult = {
-    case error: String => 
-      rtx.complete(NotAcceptable, Error(title = "RegisterUser", code = None, message = Some(error)))
-  }
-}
-
-trait RequestHandler extends Actor with Json4sSupport {
+trait RequestHandler extends Actor with Directives with CollectionJsonSupport {
   
   import context._
-
-  val json4sFormats = org.json4s.DefaultFormats
 
   def rtx: RequestContext
   def aggregateManager: ActorRef
@@ -37,16 +24,25 @@ trait RequestHandler extends Actor with Json4sSupport {
 
   private def defaultReceive: Receive = {
     case ReceiveTimeout =>
-      rtx.complete(GatewayTimeout)
+      response {
+        complete(GatewayTimeout, "Timeout")
+      }
     case res =>
-      rtx.complete(InternalServerError)
+      response {
+        complete(InternalServerError, res)
+      }
+  }
+
+  def response(finalStep: Route): Unit = {
+    finalStep(rtx)
+    stop(self)
   }
 }
 
 trait RequestHandlerCreator {
   self: HttpService =>
 
-  import UserAggregateManager._
+  import com.example.UserAggregateManager._
 
   def handle(message: AggregateManager.Command)(implicit rtx: RequestContext, aggregateManager: ActorRef) =
     

@@ -6,7 +6,7 @@ object UserAggregateManager {
 
   import AggregateManager._
 
-  case class RegisterUser(name: String, pass: String) extends Command
+  case class RegisterUser(name: String, pass: String) extends AggregateManager.Command
 
   def props: Props = Props(new UserAggregateManager)
 
@@ -22,7 +22,7 @@ class UserAggregateManager extends Actor {
   def receive = {
     case RegisterUser("",_) => sender ! "You can not register without name."
     case RegisterUser(name, pass) =>
-      implicit val id = s"user-$name"
+      implicit val id = name//s"user-$name"
       context child id getOrElse create(context.watch) forward Initialize(pass)
   }  
 

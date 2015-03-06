@@ -1,33 +1,63 @@
 package com.example
 
 import net.hamnaberg.json.collection._
-import org.json4s._
+import org.json4s.Formats
+import org.json4s.native.JsonMethods._
 import spray.http._
+import spray.httpx.Json4sSupport
+import spray.httpx.marshalling._
 import spray.httpx.unmarshalling._
-import spray.http.MediaTypes._
 
-object CollectionJsonProtocol
-{
+object CollectionJsonProtocol {
   val `application/vnd.collection+json` =
     MediaTypes.register(MediaType.custom("application/vnd.collection+json"))
 
 }
 
-trait CollectionJsonSupport {
+trait CollectionJsonSupport extends Json4sSupport {
 
-  import CollectionJsonProtocol._
+  import com.example.CollectionJsonProtocol._
 
-  //implicit val parser: JsonCollectionParser = NativeJsonCollectionParser
+  implicit def json4sFormats: Formats = org.json4s.DefaultFormats
 
-  implicit def templateUnmarshaller =
+  implicit val templateUnmarshaller: Unmarshaller[Template] =
     Unmarshaller[Template](`application/vnd.collection+json`) {
       case HttpEntity.NonEmpty(contentType, data) =>
-        NativeJsonCollectionParser.parseTemplate(data.asString).right.get
+
+        val string = data.asString
+        NativeJsonCollectionParser.parseTemplate(string) match {
+          case Right(o: Template) => o
+          case Left(e) =>
+            throw e
+        }
     }
 
-  implicit def templateObjectUnmarshaller[T: Manifest] =
+  implicit def templateObjectUnmarshaller[T <: AnyRef : Manifest]: Unmarshaller[T] =
     Unmarshaller.delegate[Template, T](`application/vnd.collection+json`) { template =>
-      implicit val formats = org.json4s.DefaultFormats
-      new data.JavaReflectionData[T].unapply(template.data).get 
+      new data.JavaReflectionData[T].unapply(template.data) match {
+        case Some(o) => o
+        case None =>
+          throw new Exception(s"Unable to convert Template to '$manifest.getClass.getName' class.")
+      }
+    }
+
+  implicit val collectionJsonStringUnmarshaller: Unmarshaller[String] =
+    Unmarshaller.delegate[JsonCollection, String](`application/vnd.collection+json`) { collection =>
+      compact(render(collection.toJson))
+    }
+
+  implicit val collectionJsonMarshaller: Marshaller[JsonCollection] =
+    Marshaller.of[JsonCollection](`application/vnd.collection+json`) { (value, contentType, ctx) =>
+      ctx.marshalTo(HttpEntity(contentType, compact(render(value.toJson))))
+    }
+
+  implicit val collectionJsonUnmarshaller =
+    Unmarshaller[JsonCollection](`application/vnd.collection+json`) {
+      case HttpEntity.NonEmpty(contentType, data) =>
+        NativeJsonCollectionParser.parseCollection(data.asString) match {
+          case Right(o: JsonCollection) => o
+          case Left(e) =>
+            JsonCollection(java.net.URI.create("http://com.example/unmarshalling"), Error("Unmarshalling CollectionJson Error", None, Some(e.getMessage)))
+        }
     }
 }
