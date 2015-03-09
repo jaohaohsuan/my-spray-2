@@ -41,15 +41,7 @@ trait CollectionJsonSupport extends Json4sSupport {
       }
     }
 
-  implicit val collectionJsonStringUnmarshaller: Unmarshaller[String] =
-    Unmarshaller.delegate[JsonCollection, String](`application/vnd.collection+json`) { collection =>
-      compact(render(collection.toJson))
-    }
-
-  implicit val collectionJsonMarshaller: Marshaller[JsonCollection] =
-    Marshaller.of[JsonCollection](`application/vnd.collection+json`) { (value, contentType, ctx) =>
-      ctx.marshalTo(HttpEntity(contentType, compact(render(value.toJson))))
-    }
+  //Do not change order of collectionJsonUnmarshaller & collectionJsonStringUnmarshaller
 
   implicit val collectionJsonUnmarshaller =
     Unmarshaller[JsonCollection](`application/vnd.collection+json`) {
@@ -60,4 +52,20 @@ trait CollectionJsonSupport extends Json4sSupport {
             JsonCollection(java.net.URI.create("http://com.example/unmarshalling"), Error("Unmarshalling CollectionJson Error", None, Some(e.getMessage)))
         }
     }
+
+  implicit val collectionJsonStringUnmarshaller: Unmarshaller[String] =
+    Unmarshaller.delegate[JsonCollection, String](`application/vnd.collection+json`) { collection =>
+      compact(render(collection.toJson))
+    }
+
+  implicit val stringMarshaller =
+    Marshaller.of[String](`application/vnd.collection+json`) { (value, contentType, ctx) =>
+      ctx.marshalTo(HttpEntity(contentType, value))
+    }
+
+  implicit val collectionJsonMarshaller: Marshaller[JsonCollection] =
+    Marshaller.of[JsonCollection](`application/vnd.collection+json`) { (value, contentType, ctx) =>
+      ctx.marshalTo(HttpEntity(contentType, compact(render(value.toJson))))
+    }
+
 }

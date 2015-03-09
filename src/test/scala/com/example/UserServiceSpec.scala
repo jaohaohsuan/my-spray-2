@@ -10,7 +10,6 @@ import org.specs2.mutable.Specification
 import spray.http.HttpHeaders._
 import spray.http.StatusCodes._
 import spray.http._
-import spray.httpx.marshalling._
 import spray.testkit.Specs2RouteTest
 
 class UserServiceSpec extends Specification with Specs2RouteTest with UserService {
@@ -20,7 +19,7 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
   override val userAggregateManager = system.actorOf(UserAggregateManager.props)
 
   "UserService" should {
-   
+
     val unnamedTemplate = """
       {
         "template" : {
@@ -32,13 +31,9 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
       }
     """
 
-   implicit val templateMarshaller =
-      Marshaller.of[String](`application/vnd.collection+json`) { (value, contentType, ctx) =>
-        ctx.marshalTo(HttpEntity(contentType, value))
-      }
-
     "To register without name should not be accepted" in {
       Post("/user",unnamedTemplate) ~> userRoute ~> check {
+        handled must beTrue
         mediaType === `application/vnd.collection+json`
         status === NotAcceptable
         val res: String = responseAs[String]
@@ -46,7 +41,7 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
         res must contain("You can not register without name.")
 
         responseAs[JsonCollection] === JsonCollection(URI.create("http://com.example/user"),
-                         Error(title = "RegisterUser", code = None, message = Some("You can not register without name.")))
+                        Error(title = "RegisterUser", code = None, message = Some("You can not register without name.")))
 
         body === HttpEntity(ContentType(`application/vnd.collection+json`, HttpCharsets.`UTF-8`), res)
       }
@@ -67,7 +62,7 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
       Post("/user", henryTemplate) ~> userRoute ~> check {
         status === Accepted
         headers must contain(RawHeader("Location","/user/henry"))
-      }      
+      }
     }
   }
 }
