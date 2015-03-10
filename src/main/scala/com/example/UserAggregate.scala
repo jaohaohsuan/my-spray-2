@@ -9,7 +9,6 @@ trait Command
 trait Event
 case object GetState extends Command
 
-
 case object Uninitialized extends State
 
 object UserAggregate {
@@ -22,8 +21,6 @@ object UserAggregate {
   case class UserInitialized(encryptedPass: String) extends Event
   case class UserPasswordChanged(encryptedPass: String) extends Event
 
-
-
   def props(id: String): Props = Props(new UserAggregate(id))
 }
 
@@ -35,40 +32,48 @@ class UserAggregate(id: String) extends PersistentActor {
 
   var state: State = Uninitialized
 
+  //only concern about how to create event, do not write anything after persisted event logic
+
   val initial: Receive = {
     case Initialize(pass) =>
-      //only concern about how to create event, do not write anything after persisted event logic
-      val encryptedPass = pass.bcrypt
-      persist(UserInitialized(encryptedPass))(afterEventPersisted)
+      persist(UserInitialized(pass.bcrypt))(afterEventPersisted)
   }
 
   val created: Receive = {
     case ChangePassword(newPass) =>
-      val newPassEncrypted = newPass.bcrypt
-      persist(UserPasswordChanged(newPassEncrypted))(afterEventPersisted)
+      persist(UserPasswordChanged(newPass.bcrypt))(afterEventPersisted)
     case GetState =>
       sender ! state
     case _: Initialize =>
       sender ! "User has been initialized."
   }
 
-  def afterEventPersisted(evt: Event): Unit = evt match {
+  def afterEventPersisted(evt: Event): Unit = {
+    updateState(evt)
+    sender ! state
+  }
+
+  def updateState(evt: Event): Unit = evt match {
     case UserInitialized(pass) =>
-      context.become(created)
       state = User(id, pass)
-      sender ! state
+      context.become(created)
     case UserPasswordChanged(newPass) =>
       state match {
         case s: User =>
           state = s.copy(pass = newPass)
-          sender ! state
       }
   }
 
   val receiveCommand: Receive = initial
 
   val receiveRecover: Receive = {
-    case _ =>
+    case evt: Event =>
+      updateState(evt)
+    case SnapshotOffer(_, snapshot: State) =>
+      state = snapshot
+      state match {
+        case _: User => context become created
+      }
   }
 
 }
