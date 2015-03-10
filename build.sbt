@@ -1,14 +1,12 @@
-lazy val hello = taskKey[Unit]("Prints 'Hello World'")
+import com.typesafe.sbt.SbtScalariform.scalariformSettings
 
-lazy val root = (project in file(".")).
-  settings(
-    name         := "my-spray-2",
-    version      := "1.0",
-    scalaVersion := "2.11.5",
-    hello        := { println("hello world!") }
-  )
+name         := "my-spray-2"
 
-scalacOptions += "-deprecation"
+version      := "1.0"
+
+scalaVersion := "2.11.5"
+
+scalacOptions ++= Seq("-feature", "-unchecked", "-deprecation", "-encoding", "utf8")
 
 libraryDependencies ++= {
   val akkaVersion      = "2.3.9"
@@ -23,8 +21,13 @@ libraryDependencies ++= {
     "com.typesafe.akka"  %% "akka-persistence-experimental" % akkaVersion,
     "org.specs2"         %% "specs2-core"                   % "2.3.11"      % "test",
     "net.hamnaberg.rest" %% "scala-json-collection"         % "2.3",
-    "org.json4s"         %% "json4s-native"                 % "3.2.11"
+    "org.json4s"         %% "json4s-native"                 % "3.2.11",
+    //"org.apache.camel" %  "camel-scala"                   % "2.14.1",
+    "org.slf4j"          %  "slf4j-simple"                  % "1.6.4",
+    "com.github.t3hnar"  %% "scala-bcrypt"                  % "2.4"
   )
 }
+
+scalariformSettings
 
 Revolver.settings

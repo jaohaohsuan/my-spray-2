@@ -32,7 +32,7 @@ trait CollectionJsonSupport extends Json4sSupport {
         }
     }
 
-  implicit def templateObjectUnmarshaller[T <: AnyRef : Manifest]: Unmarshaller[T] =
+  implicit def templateObjectUnmarshaller[T <: AnyRef: Manifest]: Unmarshaller[T] =
     Unmarshaller.delegate[Template, T](`application/vnd.collection+json`) { template =>
       new data.JavaReflectionData[T].unapply(template.data) match {
         case Some(o) => o

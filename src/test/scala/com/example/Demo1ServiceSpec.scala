@@ -1,9 +1,9 @@
 package com.example
 
 import org.specs2.mutable.Specification
-import spray.testkit.Specs2RouteTest
+import spray.http.StatusCodes._
 import spray.http._
-import StatusCodes._
+import spray.testkit.Specs2RouteTest
 
 class Demo1ServiceSpec extends Specification with Specs2RouteTest with Demo1Service {
   def actorRefFactory = system
@@ -67,13 +67,19 @@ class Demo1ServiceSpec extends Specification with Specs2RouteTest with Demo1Serv
 
     "path '/pathEnd' already fully matched" in {
       Get("/pathEnd") ~> demo1Route ~> check {
-        responseAs[String]  === "/pathEnd"
+        responseAs[String] === "/pathEnd"
       }
       Get("/pathEnd/continue") ~> demo1Route ~> check {
-        responseAs[String]  === "continue"
+        responseAs[String] === "continue"
       }
       Get("/pathEnd/") ~> demo1Route ~> check {
         handled === false
+      }
+    }
+
+    "return segment 'vim'" in {
+      Get("/segment/vim") ~> demo1Route ~> check {
+        responseAs[String] === "vim"
       }
     }
 
