@@ -19,11 +19,11 @@ libraryDependencies ++= {
     "com.typesafe.akka"  %% "akka-actor"                    % akkaVersion,
     "com.typesafe.akka"  %% "akka-testkit"                  % akkaVersion   % "test",
     "com.typesafe.akka"  %% "akka-persistence-experimental" % akkaVersion,
+    "com.typesafe.akka"  %% "akka-slf4j"                    % akkaVersion,
     "org.specs2"         %% "specs2-core"                   % "2.3.11"      % "test",
     "net.hamnaberg.rest" %% "scala-json-collection"         % "2.3",
     "org.json4s"         %% "json4s-native"                 % "3.2.11",
     //"org.apache.camel" %  "camel-scala"                   % "2.14.1",
-    "org.slf4j"          %  "slf4j-simple"                  % "1.6.4",
     "com.github.t3hnar"  %% "scala-bcrypt"                  % "2.4"
   )
 }

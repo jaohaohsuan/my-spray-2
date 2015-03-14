@@ -31,46 +31,44 @@ trait UserService extends HttpService with RequestHandlerCreator with Collection
       pathEndOrSingleSlash {
         get {
           complete(OK,
-            JsonCollection(globalUri, List[Link](), List[Item](), List[Query](), RegisterUser("username", "password"))
+            JsonCollection(globalUri, Nil,Nil,Nil, RegisterUser("username", "password"))
           )
         } ~
           post {
-            entity(as[RegisterUser]) { command =>
-              implicit ctx =>
-                handle(command)
+            entity(as[RegisterUser]) { command => implicit ctx =>
+              handle(command)
             }
           }
       } ~ path("password") {
-            get {
-              complete(OK,
-                JsonCollection(globalUri, List[Link](), List[Item](), List[Query](), ChangeUserPassword("", ""))
-              )
-            }
-            put {
-              authenticate(BasicAuth(userAuthenticator _, realm = "personal")) { user =>
-                entity(as[UserService.ChangePasswordRequest]) { e =>
-                  implicit ctx =>
-                    handle(ChangeUserPassword(user.id, e.pass))
-                }
-              }
+        get {
+          complete(OK,
+            JsonCollection(globalUri,Nil,Nil,Nil, ChangeUserPassword("", ""))
+          )
+        }
+        put {
+          authenticate(BasicAuth(userAuthenticator _, realm = "personal")) { user =>
+            entity(as[UserService.ChangePasswordRequest]) { e => implicit ctx =>
+              handle(ChangeUserPassword(user.id, e.pass))
             }
           }
+        }
+      }
     }
   } ~ path("profile" / Segment) { resource =>
     authenticate(BasicAuth(userAuthenticator _, realm = "personal")) { user: UserAggregate.User =>
       get {
-        val link = Link(URI.create("/user/password"),"edit", None,None,None)
+        val link = Link(URI.create("/user/password"), "edit", None, None, None)
         val item = Item(URI.create("/profile"), user, List(link))
         complete(OK, resource, JsonCollection(item))
       }
     }
   }
 
+  implicit def asTemplate[T <: AnyRef : Manifest](value: T)(implicit formats: org.json4s.Formats): Option[Template] =
+    Some(Template(value)(dataApply(manifest, formats)))
+
   implicit def dataApply[T <: AnyRef : Manifest](implicit formats: org.json4s.Formats): DataApply[T] = {
     new JavaReflectionData[T]()(formats, manifest[T])
   }
-
-  implicit def asTemplate[T <: AnyRef : Manifest](value: T)(implicit formats: org.json4s.Formats): Option[Template] =
-    Some(Template(value)(dataApply(manifest,formats)))
 
 }

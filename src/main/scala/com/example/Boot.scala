@@ -6,9 +6,11 @@ import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 import akka.actor._
 import akka.io.IO
 import akka.util.Timeout
+import com.typesafe.config.ConfigFactory
 import spray.can.Http
 import spray.io._
 import spray.routing.HttpServiceActor
+import akka.pattern.ask
 
 import scala.concurrent.duration._
 
@@ -57,12 +59,28 @@ trait SslConfiguration2 {
 
 object Boot extends App with SslConfiguration2 {
 
+  val config = ConfigFactory.load()
+
+  val host = config.getString("http.host")
+  val port = config.getInt("http.port")
+
   implicit val system = ActorSystem("demo1")
 
-  val service = system.actorOf(Props[ServiceActor], name = "service")
+  val api = system.actorOf(Props[ServiceActor], name = "HttpInterface")
 
-  implicit val timeout = Timeout(5.seconds)
+  implicit val executionContext = system.dispatcher
+  implicit val timeout = Timeout(10 seconds)
 
-  IO(Http) ! Http.Bind(service, interface = "localhost", port = 1978)
+  //IO(Http) ! Http.Bind(api, interface = "localhost", port = 1978)
+  IO(Http).ask(Http.Bind(listener = api, interface = host, port = port))
+    .mapTo[Http.Event]
+    .map {
+    case Http.Bound(address) =>
+      println(s"REST interface bound to $address")
+    case Http.CommandFailed(cmd) =>
+      println(s"REST interface could not bind to $host:$port, ${cmd.failureMessage}")
+      system.shutdown()
+  }
 }
+
 

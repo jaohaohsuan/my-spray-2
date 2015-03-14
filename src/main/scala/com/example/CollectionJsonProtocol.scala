@@ -11,19 +11,13 @@ import spray.httpx.unmarshalling._
 object CollectionJsonProtocol {
   val `application/vnd.collection+json` =
     MediaTypes.register(MediaType.custom("application/vnd.collection+json"))
-
-}
+ }
 
 trait CollectionJsonSupport extends Json4sSupport {
 
   import com.example.CollectionJsonProtocol._
 
   implicit def json4sFormats: Formats = org.json4s.DefaultFormats
-
-  //  implicit val templateMarshaller: Marshaller[Template] =
-  //    Marshaller.of[Template](`application/vnd.collection+json`) { (value, contentType, ctx) =>
-  //      ctx.marshalTo(HttpEntity(contentType, compact(render(value.toJson))))
-  //    }
 
   implicit val templateUnmarshaller: Unmarshaller[Template] =
     Unmarshaller[Template](`application/vnd.collection+json`) {
