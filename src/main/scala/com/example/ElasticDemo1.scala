@@ -28,7 +28,7 @@ trait elastic {
 
   def del(index: String, `type`: String, id: String) = {
     client.execute {
-      delete id 1234 from "programmers" -> "scala"
+      delete id id from index -> `type`
     }
   }
 }
@@ -51,10 +51,10 @@ trait ElasticDemo1 extends HttpService with elastic {
       }
 
     } ~
-      path(Segment / Segment / Segment) { (idx, t, i) =>
+      path(Segment / Segment / Segment) { (index, `type`, id) =>
 
         delete {
-          onComplete(del(idx, t, i)) {
+          onComplete(del(index, `type`, id)) {
             case Success(delRes) =>
               complete(OK)
             case Failure(ex) =>
