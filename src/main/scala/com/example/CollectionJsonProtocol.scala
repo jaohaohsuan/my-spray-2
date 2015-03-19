@@ -11,7 +11,7 @@ import spray.httpx.unmarshalling._
 object CollectionJsonProtocol {
   val `application/vnd.collection+json` =
     MediaTypes.register(MediaType.custom("application/vnd.collection+json"))
- }
+}
 
 trait CollectionJsonSupport extends Json4sSupport {
 

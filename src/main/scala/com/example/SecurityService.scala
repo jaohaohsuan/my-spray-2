@@ -3,7 +3,7 @@ package com.example
 import spray.routing.HttpService
 import spray.routing.authentication._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 /**
  * Created by henry on 2/26/15.

@@ -3,8 +3,8 @@ package com.example
 import java.net.URI
 
 import akka.actor.SupervisorStrategy._
-import akka.actor.{ActorRef, _}
-import net.hamnaberg.json.collection.{Error, JsonCollection}
+import akka.actor.{ ActorRef, _ }
+import net.hamnaberg.json.collection.{ Error, JsonCollection }
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
 import spray.routing.RequestContext

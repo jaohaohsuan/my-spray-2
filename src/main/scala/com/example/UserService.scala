@@ -5,7 +5,6 @@ import java.net.URI
 import akka.actor._
 import com.example.CollectionJsonProtocol._
 import net.hamnaberg.json.collection._
-import net.hamnaberg.json.collection.data._
 import spray.http.StatusCodes._
 import spray.routing._
 import spray.routing.authentication.BasicAuth
@@ -23,6 +22,7 @@ trait UserService extends HttpService with RequestHandlerCreator with Collection
   //do not change order
 
   import com.example.UserAggregateManager._
+  import com.example.implicitTemplateConversions._
 
   val globalUri = URI.create("http://example.com/user")
 
@@ -31,24 +31,26 @@ trait UserService extends HttpService with RequestHandlerCreator with Collection
       pathEndOrSingleSlash {
         get {
           complete(OK,
-            JsonCollection(globalUri, Nil,Nil,Nil, RegisterUser("username", "password"))
+            JsonCollection(globalUri, Nil, Nil, Nil, RegisterUser("username", "password"))
           )
         } ~
           post {
-            entity(as[RegisterUser]) { command => implicit ctx =>
-              handle(command)
+            entity(as[RegisterUser]) { command =>
+              implicit ctx =>
+                handle(command)
             }
           }
       } ~ path("password") {
         get {
           complete(OK,
-            JsonCollection(globalUri,Nil,Nil,Nil, ChangeUserPassword("", ""))
+            JsonCollection(globalUri, Nil, Nil, Nil, ChangeUserPassword("", ""))
           )
         }
         put {
           authenticate(BasicAuth(userAuthenticator _, realm = "personal")) { user =>
-            entity(as[UserService.ChangePasswordRequest]) { e => implicit ctx =>
-              handle(ChangeUserPassword(user.id, e.pass))
+            entity(as[UserService.ChangePasswordRequest]) { e =>
+              implicit ctx =>
+                handle(ChangeUserPassword(user.id, e.pass))
             }
           }
         }
@@ -64,11 +66,6 @@ trait UserService extends HttpService with RequestHandlerCreator with Collection
     }
   }
 
-  implicit def asTemplate[T <: AnyRef : Manifest](value: T)(implicit formats: org.json4s.Formats): Option[Template] =
-    Some(Template(value)(dataApply(manifest, formats)))
-
-  implicit def dataApply[T <: AnyRef : Manifest](implicit formats: org.json4s.Formats): DataApply[T] = {
-    new JavaReflectionData[T]()(formats, manifest[T])
-  }
-
 }
+
+
