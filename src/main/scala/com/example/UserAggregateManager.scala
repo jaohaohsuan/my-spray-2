@@ -14,7 +14,7 @@ object UserAggregateManager {
 }
 
 //UserAggregate's parent(supervisor)
-class UserAggregateManager extends Actor {
+class UserAggregateManager extends Actor with ActorLogging {
 
   import com.example.UserAggregate._
   import com.example.UserAggregateManager._

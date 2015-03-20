@@ -55,7 +55,7 @@ trait ElasticDemo1 extends HttpService with elastic {
 
         delete {
           onComplete(del(index, `type`, id)) {
-            case Success(delRes) =>
+            case Success(delRes) if delRes.isFound =>
               complete(OK)
             case Failure(ex) =>
               complete(InternalServerError, ex.getMessage)

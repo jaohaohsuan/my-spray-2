@@ -12,23 +12,21 @@ import spray.routing.HttpServiceActor
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class ServiceActor extends HttpServiceActor
-        with Demo1Service
-        with SecurityService
-        with ExceptionHandlingService
-        with UserService
-        with ElasticDemo1 {
+class ServiceActor extends HttpServiceActor with AggregateManagerCreator
+  with Demo1Service
+  with SecurityService
+  with ExceptionHandlingService
+  with UserService
+  with ElasticDemo1 {
 
   override def executionContext = context.dispatcher
 
   val client = ElasticClient.remote("localhost", 9300)
 
-  val userAggregateManager = context.actorOf(UserAggregateManager.props)
+  val userAggregateManager = createUserAggregateManager
 
   def receive = runRoute(demo1Route ~ securityRoute ~ exceptionHandlingRoute ~ userRoute ~ esRoute)
 }
-
-
 
 object Boot extends App with SslConfiguration {
 
@@ -48,11 +46,11 @@ object Boot extends App with SslConfiguration {
   IO(Http).ask(Http.Bind(listener = api, interface = host, port = port))
     .mapTo[Http.Event]
     .map {
-      case Http.Bound(address) =>
-        println(s"REST interface bound to $address")
-      case Http.CommandFailed(cmd) =>
-        println(s"REST interface could not bind to $host:$port, ${cmd.failureMessage}")
-        system.shutdown()
-    }
+    case Http.Bound(address) =>
+      println(s"REST interface bound to $address")
+    case Http.CommandFailed(cmd) =>
+      println(s"REST interface could not bind to $host:$port, ${cmd.failureMessage}")
+      system.shutdown()
+  }
 }
 

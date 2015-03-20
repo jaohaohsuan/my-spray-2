@@ -25,6 +25,8 @@ libraryDependencies ++= {
     "com.typesafe.akka"  %% "akka-testkit"                  % akkaVersion   % "test",
     "com.typesafe.akka"  %% "akka-persistence-experimental" % akkaVersion,
     "com.typesafe.akka"  %% "akka-slf4j"                    % akkaVersion,
+    "com.typesafe.akka"  %% "akka-remote"                   % akkaVersion,
+    "com.typesafe.akka"  %% "akka-multi-node-testkit"        % akkaVersion   % "test",
     "ch.qos.logback"     %  "logback-classic"               % "1.0.13",
     "org.specs2"         %% "specs2-core"                   % "2.3.11"      % "test",
     "net.hamnaberg.rest" %% "scala-json-collection"         % "2.3",
@@ -35,6 +37,8 @@ libraryDependencies ++= {
   )
 }
 
+//mainClass:= Some("com.example.BackendMain")
+
 //scalariformSettings
 
-//Revolver.settings
+Revolver.settings
