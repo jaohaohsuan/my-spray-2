@@ -11,3 +11,4 @@ test-output/
 *.swp
 log/*.log
 .DS_Store
+elasticsearch/
