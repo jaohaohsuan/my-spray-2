@@ -16,6 +16,47 @@ trait AggregateManagerCreator {
 
 }
 
+trait ConfiguredRemoteAggregateManagerDeployment extends AggregateManagerCreator { this: Actor =>
+  override def createUserAggregateManager =
+    context.actorOf(Props(classOf[RemoteActorForwarder],UserAggregateManager.props, "userAggregateManager"), "forwarder")
+}
+
+class RemoteActorForwarder(props: Props, name: String) extends Actor with ActorLogging {
+  context.setReceiveTimeout(3 seconds)
+
+  deployAndWatch()
+
+  def deployAndWatch(): Unit =
+  {
+    val actor = context.actorOf(props, name)
+    context.watch(actor)
+    log.info("switching to maybe active state.")
+    context.become(maybeActive(actor))
+    context.setReceiveTimeout(Duration.Undefined)
+  }
+
+  def receive = deploying
+
+  def deploying: Receive = {
+
+    case ReceiveTimeout =>
+      deployAndWatch()
+    case msg: Any =>
+      log.error(s"Ignoring message $msg, not ready yet.")
+  }
+
+  def maybeActive(actor: ActorRef): Receive = {
+
+    case Terminated(actorRef) =>
+      log.info(s"Actor $actorRef terminated.")
+      log.info("switching to deploying state.")
+      context.become(deploying)
+      context.setReceiveTimeout(3 seconds)
+      deployAndWatch()
+    case msg:Any => actor forward msg
+  }
+}
+
 object UserAggregateManagerCreator {
   val config = ConfigFactory.load("frontend").getConfig("backend")
   val host = config.getString("host")
@@ -28,7 +69,6 @@ object UserAggregateManagerCreator {
     s"$protocol://$systemName@$host:$port/$actorName"
 
 }
-
 
 trait RemoteAggregateManagerCreator extends AggregateManagerCreator {
   this: Actor =>

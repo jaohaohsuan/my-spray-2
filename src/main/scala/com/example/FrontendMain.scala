@@ -24,11 +24,11 @@ object FrontendMain extends SslConfiguration {
     val host = "localhost"
     val port = 1978
 
-    class FrontendRestApi extends ServiceActor with RemoteAggregateManagerCreator
+    class FrontendRestApiWatch extends ServiceActor with ConfiguredRemoteAggregateManagerDeployment
 
     implicit val system = ActorSystem("frontend", config)
 
-    val api = system.actorOf(Props[FrontendRestApi], name = "RestInterface")
+    val api = system.actorOf(Props[FrontendRestApiWatch], name = "restInterface")
 
     implicit val executionContext = system.dispatcher
     implicit val timeout = Timeout(10 seconds)
