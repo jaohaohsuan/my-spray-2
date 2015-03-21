@@ -1,5 +1,3 @@
-import com.typesafe.sbt.SbtScalariform.scalariformSettings
-
 name         := "my-spray-2"
 
 version      := "1.0"
