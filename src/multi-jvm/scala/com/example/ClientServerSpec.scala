@@ -23,6 +23,22 @@ class ClientServerSpec extends MultiNodeSpec(ClientServerConfig)
   def initialParticipants = roles.size
 
   "A Client Server configured app" must {
+    "wait for nodes to enter a barrier" in {
+      enterBarrier("startup")
+    }
 
+    "be able to create an event and sell a ticket" in {
+
+      runOn(frontend) {
+        enterBarrier("deployed")
+
+      }
+
+      runOn(backend) {
+        enterBarrier("deployed")
+      }
+
+      enterBarrier("finished")
+    }
   }
 }

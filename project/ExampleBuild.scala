@@ -25,7 +25,9 @@ object ExampleBuild extends Build {
         val overall =
           if(testResults.overall.id < multiJvmResults.overall.id) multiJvmResults.overall
           else testResults.overall
-        Tests.Output(overall, testResults.events ++ multiJvmResults.events, testResults.summaries ++ multiJvmResults.summaries)
+        Tests.Output(overall,
+          testResults.events ++ multiJvmResults.events,
+          testResults.summaries ++ multiJvmResults.summaries)
     }
   )
 }
