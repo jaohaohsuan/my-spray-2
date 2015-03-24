@@ -5,9 +5,9 @@ package com.example
  */
 
 import com.typesafe.config.ConfigFactory
-import akka.actor.{Props, ActorSystem}
+import akka.actor.{ Props, ActorSystem }
 
-object BackendMain  {
+object BackendMain {
 
   def main(args: Array[String]): Unit = {
 

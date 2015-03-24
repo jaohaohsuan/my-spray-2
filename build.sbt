@@ -39,6 +39,6 @@ libraryDependencies ++= {
 
 //mainClass:= Some("com.example.BackendMain")
 
-//scalariformSettings
+scalariformSettings
 
 Revolver.settings

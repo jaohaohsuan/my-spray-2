@@ -18,7 +18,7 @@ trait AggregateManagerCreator {
 
 trait ConfiguredRemoteAggregateManagerDeployment extends AggregateManagerCreator { this: Actor =>
   override def createUserAggregateManager =
-    context.actorOf(Props(classOf[RemoteActorForwarder],UserAggregateManager.props, "userAggregateManager"), "forwarder")
+    context.actorOf(Props(classOf[RemoteActorForwarder], UserAggregateManager.props, "userAggregateManager"), "forwarder")
 }
 
 class RemoteActorForwarder(props: Props, name: String) extends Actor with ActorLogging {
@@ -27,13 +27,13 @@ class RemoteActorForwarder(props: Props, name: String) extends Actor with ActorL
   deployAndWatch()
 
   def deployAndWatch(): Unit =
-  {
-    val actor = context.actorOf(props, name)
-    context.watch(actor)
-    log.info("switching to maybe active state.")
-    context.become(maybeActive(actor))
-    context.setReceiveTimeout(Duration.Undefined)
-  }
+    {
+      val actor = context.actorOf(props, name)
+      context.watch(actor)
+      log.info("switching to maybe active state.")
+      context.become(maybeActive(actor))
+      context.setReceiveTimeout(Duration.Undefined)
+    }
 
   def receive = deploying
 
@@ -53,7 +53,7 @@ class RemoteActorForwarder(props: Props, name: String) extends Actor with ActorL
       context.become(deploying)
       context.setReceiveTimeout(3 seconds)
       deployAndWatch()
-    case msg:Any => actor forward msg
+    case msg: Any => actor forward msg
   }
 }
 

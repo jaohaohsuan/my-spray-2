@@ -1,6 +1,5 @@
 package com.example
 
-
 import net.hamnaberg.json.collection._
 import net.hamnaberg.json.collection.data._
 /**

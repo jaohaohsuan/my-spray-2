@@ -8,7 +8,7 @@ import spray.http.StatusCodes._
 import spray.routing._
 
 import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 import scala.language.postfixOps
 

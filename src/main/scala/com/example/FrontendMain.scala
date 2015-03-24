@@ -10,7 +10,7 @@ import spray.routing.HttpServiceActor
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import com.typesafe.config.ConfigFactory
-import akka.actor.{Props, ActorSystem}
+import akka.actor.{ Props, ActorSystem }
 import spray.can.Http
 import spray.can.Http.Bind
 import akka.pattern.ask
@@ -36,13 +36,12 @@ object FrontendMain extends SslConfiguration {
     Http(system).manager.ask(Bind(listener = api, interface = host, port = port))
       .mapTo[Http.Event]
       .map {
-      case Http.Bound(address) =>
-        println(s"REST interface bound to $address")
-      case Http.CommandFailed(cmd) =>
-        println(s"REST interface could not bind to $host:$port, ${cmd.failureMessage}")
-        system.shutdown()
-    }
+        case Http.Bound(address) =>
+          println(s"REST interface bound to $address")
+        case Http.CommandFailed(cmd) =>
+          println(s"REST interface could not bind to $host:$port, ${cmd.failureMessage}")
+          system.shutdown()
+      }
   }
-
 
 }
