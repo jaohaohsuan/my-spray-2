@@ -26,13 +26,8 @@ class UserAggregateManager extends Actor with ActorLogging {
       implicit val id = s"user-$name"
       context child id getOrElse create(context.watch) forward Initialize(pass)
     case GetUser(name) =>
-      val id = s"user-$name"
-      context child id match {
-        case Some(child) =>
-          child forward GetState
-        case None =>
-          sender ! "User is not exist."
-      }
+      implicit val id = s"user-$name"
+      context child id getOrElse create(context.watch) forward GetState
     case ChangeUserPassword(_, pass) if pass.length < 5 =>
       sender ! "password length is too short"
     case ChangeUserPassword(id, pass) =>

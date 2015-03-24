@@ -37,6 +37,9 @@ class UserAggregate(id: String) extends PersistentActor {
   val initial: Receive = {
     case Initialize(pass) if pass.length > 5 =>
       persist(UserInitialized(pass.bcrypt))(afterEventPersisted)
+    case _ =>
+      sender ! state
+      context stop self
   }
 
   val created: Receive = {
