@@ -58,6 +58,24 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
         body === HttpEntity(ContentType(`application/vnd.collection+json`, HttpCharsets.`UTF-8`), res)
       }
     }
+    
+    "return password length is too short" in {
+      
+      val template = """
+        { "template" : {
+            "data" : [
+              { "name" : "name", "value" : "usr1"}
+              { "name" : "pass", "value" : "1234"},
+            ]
+          }
+        }
+      """
+
+      Post("/user", template) ~> userRoute ~> check {
+        status === NotAcceptable
+        responseAs[String] must contain("password length is too short")
+      }
+    }
 
     "return with Location Header and Accepted" in {
 
@@ -87,7 +105,7 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
       {
         "template" : {
           "data" : [
-             { "name" : "pass", "value" : "new", "prompt" : "new password" }
+             { "name" : "pass", "value" : "newpWd", "prompt" : "new password" }
           ]
         }
       } """
@@ -100,7 +118,7 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
           handled must beTrue
           status === OK
           val u = getUserFromManager(name)
-          "new".isBcrypted(u.pass) must beTrue
+          "newpWd".isBcrypted(u.pass) must beTrue
         }
     }
 

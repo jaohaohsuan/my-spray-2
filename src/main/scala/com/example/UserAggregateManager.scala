@@ -21,6 +21,7 @@ class UserAggregateManager extends Actor with ActorLogging {
 
   def receive = {
     case RegisterUser("", _) => sender ! "You can not register without name."
+    case RegisterUser(_, password) if password.length < 5 => sender ! "password length is too short"
     case RegisterUser(name, pass) =>
       implicit val id = s"user-$name"
       context child id getOrElse create(context.watch) forward Initialize(pass)
@@ -32,8 +33,8 @@ class UserAggregateManager extends Actor with ActorLogging {
         case None =>
           sender ! "User is not exist."
       }
-    case ChangeUserPassword(_, "") =>
-      sender ! "You can not use empty password."
+    case ChangeUserPassword(_, pass) if pass.length < 5 =>
+      sender ! "password length is too short"
     case ChangeUserPassword(id, pass) =>
       context child id getOrElse create(context.watch)(id) forward ChangePassword(pass)
   }

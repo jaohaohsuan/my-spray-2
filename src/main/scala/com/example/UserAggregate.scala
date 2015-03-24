@@ -35,12 +35,12 @@ class UserAggregate(id: String) extends PersistentActor {
   //only concern about how to create event, do not write anything after persisted event logic
 
   val initial: Receive = {
-    case Initialize(pass) =>
+    case Initialize(pass) if pass.length > 5 =>
       persist(UserInitialized(pass.bcrypt))(afterEventPersisted)
   }
 
   val created: Receive = {
-    case ChangePassword(newPass) =>
+    case ChangePassword(newPass) if newPass.length > 5 =>
       persist(UserPasswordChanged(newPass.bcrypt))(afterEventPersisted)
     case GetState =>
       sender ! state
