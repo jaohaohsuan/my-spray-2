@@ -68,4 +68,3 @@ trait UserService extends HttpService with RequestHandlerCreator with Collection
 
 }
 
-
