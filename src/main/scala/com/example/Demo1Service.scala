@@ -50,6 +50,17 @@ trait Demo1Service extends HttpService {
         complete(a)
       }
     }
+  } ~ path("segments" / Segments) { segments =>
+    get {
+      complete(s"the segments is $segments")
+    }
+  } ~ pathPrefix("start") {
+    pathSuffix("end") {
+      path(RestPath) { path => complete(s"the inner path is $path") }
+    }
+  } ~ pathPrefix("restpath") {
+    path(RestPath) { path => complete(s"the rest path is $path") }
+
   }
 
   val handledRoute = pathPrefix("handled") {
