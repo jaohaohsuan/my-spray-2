@@ -14,15 +14,21 @@ trait AggregateManagerCreator {
   def createUserAggregateManager: ActorRef =
     context.actorOf(UserAggregateManager.props, "userAggregateManager")
 
+  def createResourceAggregateManager: ActorRef =
+    context.actorOf(Props[UserAggregateManager], "resourceAggregateManager")
+
 }
 
 trait ConfiguredRemoteAggregateManagerDeployment extends AggregateManagerCreator { this: Actor =>
   override def createUserAggregateManager =
-    context.actorOf(Props(classOf[RemoteActorForwarder], UserAggregateManager.props, "userAggregateManager"), "forwarder")
+    context.actorOf(Props(classOf[RemoteActorForwarder], UserAggregateManager.props, "userAggregateManager"), "forwarder1")
+
+  override def createResourceAggregateManager =
+    context.actorOf(Props(classOf[RemoteActorForwarder], Props[ResourceAggregateManager], "resourceAggregateManager"), "forwarder2")
 }
 
 class RemoteActorForwarder(props: Props, name: String) extends Actor with ActorLogging {
-  context.setReceiveTimeout(3 seconds)
+  context.setReceiveTimeout(10 seconds)
 
   deployAndWatch()
 
@@ -51,66 +57,10 @@ class RemoteActorForwarder(props: Props, name: String) extends Actor with ActorL
       log.info(s"Actor $actorRef terminated.")
       log.info("switching to deploying state.")
       context.become(deploying)
-      context.setReceiveTimeout(3 seconds)
+      context.setReceiveTimeout(10 seconds)
+
       deployAndWatch()
     case msg: Any => actor forward msg
   }
 }
 
-object UserAggregateManagerCreator {
-  val config = ConfigFactory.load("frontend").getConfig("backend")
-  val host = config.getString("host")
-  val port = config.getInt("port")
-  val protocol = config.getString("protocol")
-  val systemName = config.getString("system")
-  val actorName = config.getString("actor")
-
-  def createPath =
-    s"$protocol://$systemName@$host:$port/$actorName"
-
-}
-
-trait RemoteAggregateManagerCreator extends AggregateManagerCreator {
-  this: Actor =>
-
-  override def createUserAggregateManager = {
-    import UserAggregateManagerCreator._
-    context.actorOf(Props(classOf[RemoteLookup], createPath))
-  }
-}
-
-class RemoteLookup(path: String) extends Actor with ActorLogging {
-  context.setReceiveTimeout(3 seconds)
-
-  def sendIdentifyRequest: Unit = {
-    context.actorSelection(path) ! Identify(path)
-  }
-
-  def receive = identify
-
-  val identify: Receive = {
-    case ActorIdentity(`path`, Some(actor)) =>
-      context.setReceiveTimeout(Duration.Undefined)
-      log.info("switching to active state.")
-      context.become(active(actor))
-      context.watch(actor)
-
-    case ActorIdentity(`path`, None) =>
-      log.error(s"Remote actor with path $path is not available.")
-
-    case ReceiveTimeout => sendIdentifyRequest
-    case msg: Any =>
-      log.error(s"Ignoring message $msg, remote actor is not ready yet.")
-  }
-
-  def active(actor: ActorRef): Receive = {
-    case Terminated(actorRef) =>
-      log.info("Actor $actorRef terminated.")
-      log.info("switching to identify state")
-      context.become(identify)
-      context.setReceiveTimeout(3 seconds)
-      sendIdentifyRequest
-    case msg: Any =>
-      actor forward msg
-  }
-}

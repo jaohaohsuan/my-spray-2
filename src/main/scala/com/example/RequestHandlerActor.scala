@@ -6,7 +6,7 @@ import spray.routing._
 
 import scala.concurrent.duration._
 
-trait RequestHandler extends Actor with Directives with CollectionJsonSupport {
+trait RequestHandler extends Actor with Directives with CollectionJsonSupport with ActorLogging {
 
   import context._
 
@@ -41,12 +41,15 @@ trait RequestHandler extends Actor with Directives with CollectionJsonSupport {
 trait RequestHandlerCreator {
   self: HttpService =>
 
-  import com.example.UserAggregateManager._
+  import UserAggregateManager._
+  import ResourceAggregateManagerProtocol._
+  import UserAggregate.{ User }
 
-  def handle(message: AggregateManager.Command)(implicit rtx: RequestContext, aggregateManager: ActorRef) =
+  def handle(message: AggregateManager.Command)(implicit rtx: RequestContext, aggregateManager: ActorRef, user: Option[User] = None) =
 
     message match {
       case _: RegisterUser => actorRefFactory.actorOf(Props(RegisterUserRequestActor(rtx, aggregateManager, message)))
       case _: ChangeUserPassword => actorRefFactory.actorOf(Props(ChangeUserPasswordRequestActor(rtx, aggregateManager, message)))
+      case _: CreateResource => actorRefFactory.actorOf(Props(CreateResourceRequestActor(rtx, aggregateManager, user, message)))
     }
 }

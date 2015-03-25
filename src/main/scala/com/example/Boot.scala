@@ -17,7 +17,8 @@ class ServiceActor extends HttpServiceActor with AggregateManagerCreator
     with SecurityService
     with ExceptionHandlingService
     with UserService
-    with ElasticDemo1 {
+    with ElasticDemo1
+    with ResourceService {
 
   override def executionContext = context.dispatcher
 
@@ -25,7 +26,9 @@ class ServiceActor extends HttpServiceActor with AggregateManagerCreator
 
   val userAggregateManager = createUserAggregateManager
 
-  def receive = runRoute(demo1Route ~ securityRoute ~ exceptionHandlingRoute ~ userRoute ~ esRoute)
+  val resourceAggregateManager = createResourceAggregateManager
+
+  def receive = runRoute(demo1Route ~ securityRoute ~ exceptionHandlingRoute ~ userRoute ~ esRoute ~ resourceRoute)
 }
 
 object Boot extends App with SslConfiguration {
