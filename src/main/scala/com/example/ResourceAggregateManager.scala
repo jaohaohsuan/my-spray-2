@@ -3,6 +3,7 @@ package com.example
 import akka.actor._
 import java.util.{ UUID }
 import akka.actor.SupervisorStrategy.{ Resume, Stop }
+import com.example.PermissionProtocol.GetOwner
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -20,7 +21,7 @@ object RootDirectory {
 
   def props = Props(classOf[ResourceAggregate], "7e5db785-d738-4679-8ae2-45b3b70cfe82")
 
-  val path = "root"
+  def `/root`(implicit self: ActorRef) = s"../${self.path.name}/root"
 
   object `root` extends OwnerConfirmed("root", Set("root"))
 
@@ -32,38 +33,30 @@ class ResourceAggregateManager extends Actor with ActorLogging {
 
   import ResourceAggregateManagerProtocol._
   import ResourceProtocol._
-  import PermissionProtocol._
   import RootDirectory._
+  import PermissionProtocol._
 
   def receive = initial
 
-  context.actorOf(props, path) ! Initialize
+  context.actorOf(props, "root") ! Initialize(self)
 
   val initial: Receive = {
-
-    case GetUser =>
+    case GetOwner =>
       sender ! `root`
     case _: Resource =>
       log.info("become established")
       context.become(established)
-      context.setReceiveTimeout(Duration.Undefined)
+
     case ReceiveTimeout =>
       log.info("listen to '/root' timeout ")
-      context.actorSelection(s"../${self.path.name}/root") ! GetState
-
-    //context.child("root") match {
-    //case Some(actorRef) =>
-    //actorRef ! GetState
-    //context.setReceiveTimeout(Duration.Undefined)
-    //case None =>
-    //   log.error("'/root has not been established")
-    //}
+      context.actorSelection(`/root`) ! GetState
+      context.setReceiveTimeout(Duration.Undefined)
   }
 
   val established: Receive = {
 
     case CreateResource(resource, resourcePath) =>
-      context.actorSelection(s"../$path") forward resource
+      context.actorSelection(`/root`) forward Handshaking(resource, None)
 
   }
 

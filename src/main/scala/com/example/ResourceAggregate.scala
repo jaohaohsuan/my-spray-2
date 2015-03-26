@@ -7,9 +7,11 @@ import akka.actor.SupervisorStrategy.{ Resume, Stop }
 
 object ResourceProtocol {
 
-  object Initialize extends Command
+  case class Initialize(pipe: ActorRef) extends Command
 
-  case class QuerySyntax(name: String)
+  case class Touch(resource: AnyRef, owner: ActorRef)
+
+  case class QuerySyntax(name: String, syntax: String)
 
   case class ResourceCreated(name: String, groups: Set[String]) extends Event
 
@@ -19,7 +21,7 @@ object ResourceProtocol {
 
 object PermissionProtocol {
 
-  object GetUser
+  object GetOwner extends Command
 
   case class Handshaking(resource: AnyRef, user: Option[OwnerConfirmed])
 
@@ -38,8 +40,8 @@ class ResourceAggregate(uuid: String) extends PersistentActor with ActorLogging 
 
   val initial: Receive = {
 
-    case Initialize =>
-      sender ! GetUser
+    case Initialize(owner) =>
+      owner ! "GetOwner"
     case OwnerConfirmed(name, groups) =>
       persist(ResourceCreated(name, groups))(afterEventPersisted)
   }
@@ -47,26 +49,28 @@ class ResourceAggregate(uuid: String) extends PersistentActor with ActorLogging 
   def receiveCommand = initial
 
   val idle: Receive = {
-    //case Initialize =>
-    //sender ! state
     case GetState =>
       sender ! state
-    case Handshaking(q, Some(OwnerConfirmed(name, userGroups))) =>
+    case msg @ Handshaking(_, None) =>
+      sender ! msg
+    case Handshaking(resource, Some(OwnerConfirmed(name, userGroups))) =>
       state match {
         case Resource(_, groups) if (groups & userGroups).size > 0 =>
           context.become(write)
-          self ! q
+          log.info("switch to write")
+          self ! Touch(resource, sender)
       }
-    case resource: QuerySyntax =>
-      sender ! Handshaking(resource, None)
-
   }
 
   val write: Receive = {
 
-    case QuerySyntax(name) =>
-      context.actorOf(Props(classOf[ResourceAggregate], UUID.randomUUID.toString), name)
+    case Handshaking(resource, _) =>
+      self ! Touch(resource, sender)
+    case Touch(QuerySyntax(name, _), owner) =>
+      context.actorOf(Props(classOf[ResourceAggregate], UUID.randomUUID.toString), name) ! Initialize(owner)
+      log.info(s"QuerySyntax resource '$name' is created")
     case _ =>
+      context.become(idle)
       log.error("unsupported resource writing fail")
 
   }
@@ -79,7 +83,7 @@ class ResourceAggregate(uuid: String) extends PersistentActor with ActorLogging 
   def updateState(evt: Event): Unit = evt match {
     case ResourceCreated(name, groups) =>
       state = Resource(name, groups)
-      log.info("switch to idle")
+      log.info(s"${self.path.name} switch to idle")
       context.become(idle)
     case _ =>
   }
@@ -97,8 +101,5 @@ class ResourceAggregate(uuid: String) extends PersistentActor with ActorLogging 
       case _: InvalidActorNameException => {
         Resume
       }
-      case ex: Exception =>
-        log.error(ex, s"create child resource error: ${ex.getMessage}")
-        Stop
     }
 }
