@@ -29,7 +29,7 @@ case class CreateResourceRequestActor(
 
   def processResult: Receive = {
 
-    case GetOwner =>
+    case "GetOwner" =>
       currentUser match {
         case Some(u) =>
           sender ! u

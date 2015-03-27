@@ -21,8 +21,6 @@ object ResourceProtocol {
 
 object PermissionProtocol {
 
-  object GetOwner extends Command
-
   case class Handshaking(resource: AnyRef, user: Option[OwnerConfirmed])
 
   case class OwnerConfirmed(name: String, groups: Set[String])
@@ -38,15 +36,16 @@ class ResourceAggregate(uuid: String) extends PersistentActor with ActorLogging 
   import ResourceProtocol._
   import PermissionProtocol._
 
+  def receiveCommand = initial
+
   val initial: Receive = {
 
     case Initialize(owner) =>
+      log.info(s"ask to get owner ${owner}")
       owner ! "GetOwner"
     case OwnerConfirmed(name, groups) =>
       persist(ResourceCreated(name, groups))(afterEventPersisted)
   }
-
-  def receiveCommand = initial
 
   val idle: Receive = {
     case GetState =>
@@ -99,6 +98,7 @@ class ResourceAggregate(uuid: String) extends PersistentActor with ActorLogging 
   override val supervisorStrategy =
     OneForOneStrategy() {
       case _: InvalidActorNameException => {
+        //log.debug(s"this child size is ${child.size}")
         Resume
       }
     }

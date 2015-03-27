@@ -3,7 +3,6 @@ package com.example
 import akka.actor._
 import java.util.{ UUID }
 import akka.actor.SupervisorStrategy.{ Resume, Stop }
-import com.example.PermissionProtocol.GetOwner
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -41,7 +40,7 @@ class ResourceAggregateManager extends Actor with ActorLogging {
   context.actorOf(props, "root") ! Initialize(self)
 
   val initial: Receive = {
-    case GetOwner =>
+    case "GetOwner" =>
       sender ! `root`
     case _: Resource =>
       log.info("become established")
@@ -63,6 +62,7 @@ class ResourceAggregateManager extends Actor with ActorLogging {
   override val supervisorStrategy =
     OneForOneStrategy() {
       case _: InvalidActorNameException => {
+        log.debug("InvalidActorNameException")
         Resume
       }
     }
