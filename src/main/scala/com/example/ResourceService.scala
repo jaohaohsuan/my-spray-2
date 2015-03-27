@@ -18,7 +18,6 @@ trait ResourceService extends HttpService with RequestHandlerCreator with Collec
 
   implicit val resourceAggregateManager: ActorRef
 
-  import ResourceAggregateManagerProtocol._
   import ResourceService._
   import ResourceProtocol._
 
@@ -28,15 +27,15 @@ trait ResourceService extends HttpService with RequestHandlerCreator with Collec
 
       implicit val validUser: Option[UserAggregate.User] = Some(user)
 
-      path(RestPath) { path =>
+      path( Segments ) { path =>
         get {
           complete(s"$path")
         } ~
           put {
+            import ResourceAggregateManager._
             entity(as[EsQuery]) { data =>
               implicit ctx =>
-                val EsQuery(name, syntax) = data
-                handle(CreateResource(QuerySyntax(name, syntax), path.toString))
+                handle(CreateResource(path))
             }
           } ~
           delete {

@@ -14,46 +14,21 @@ import UserAggregate.{ User }
 case class CreateResourceRequestActor(
     rtx: RequestContext,
     aggregateManager: ActorRef,
-    user: Option[User],
+    user: User,
     message: AggregateManager.Command) extends RequestHandler {
 
   val uri = URI.create("http://com.example/resources")
 
   import ResourceProtocol._
-  import PermissionProtocol._
-
-  val currentUser = user.map(value => {
-    val User(name, _) = value
-    OwnerConfirmed(name, Set(name, "root"))
-  })
 
   def processResult: Receive = {
-
-    case "GetOwner" =>
-      currentUser match {
-        case Some(u) =>
-          sender ! u
-        case None => log.error("fail to get owner")
-      }
-    case msg: Handshaking =>
-      sender ! msg.copy(user = currentUser)
-
-    case Resource(name, _) =>
+    case cmd: CreatingResource =>
+      sender ! cmd.copy(owner = Some(user.id), groups = Some(Set("admin")))
+    case r: ResourceState =>
       response {
-        respondWithHeader(RawHeader(s"Location", s"/resource/$name")) {
-          complete(Accepted)
-        }
+        complete(OK, r)
       }
-
-    case error: String =>
-      response {
-        complete(NotAcceptable, JsonCollection(uri, Error(title = "CreateResource", code = None, message = Some(error))))
-      }
-
-    case e: AnyRef =>
-      response {
-        complete(InternalServerError, s"unexpected message $e")
-      }
+    case _ =>
   }
 
   override val supervisorStrategy =

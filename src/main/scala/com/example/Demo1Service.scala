@@ -61,6 +61,13 @@ trait Demo1Service extends HttpService {
   } ~ pathPrefix("restpath") {
     path(RestPath) { path => complete(s"the rest path is $path") }
 
+  } ~ pathPrefix("reverse") {
+    pathPrefix("head") {
+      path(RestPath) { path =>
+        val r = path.reverse
+        complete(s"${r.head} ${r.tail.reverse}")
+      }
+    }
   }
 
   val handledRoute = pathPrefix("handled") {

@@ -3,60 +3,50 @@ package com.example
 import akka.actor._
 import java.util.{ UUID }
 import akka.actor.SupervisorStrategy.{ Resume, Stop }
+import com.example.ResourceProtocol.{CreatingResource, ResourceState}
+
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object ResourceAggregateManagerProtocol {
+import akka.util.Timeout
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
-  case class CreateResource(resource: AnyRef, resourcePath: String) extends AggregateManager.Command
+object ResourceAggregateManager {
 
-}
-
-object RootDirectory {
-
-  import PermissionProtocol._
-  import ResourceProtocol._
-
-  def props = Props(classOf[ResourceAggregate], "7e5db785-d738-4679-8ae2-45b3b70cfe82")
-
-  def `/root`(implicit self: ActorRef) = s"../${self.path.name}/root"
-
-  object `root` extends OwnerConfirmed("root", Set("root"))
+  case class CreateResource(path: List[String]) extends AggregateManager.Command
 
 }
 
 class ResourceAggregateManager extends Actor with ActorLogging {
 
-  context.setReceiveTimeout(2 seconds)
-
-  import ResourceAggregateManagerProtocol._
+  import ResourceAggregateManager._
   import ResourceProtocol._
-  import RootDirectory._
-  import PermissionProtocol._
 
-  def receive = initial
 
-  context.actorOf(props, "root") ! Initialize(self)
+  val rootProps = Props(classOf[ResourceAggregate], "7e5db785-d738-4679-8ae2-45b3b70cfe82")
 
-  val initial: Receive = {
-    case "GetOwner" =>
-      sender ! `root`
-    case _: Resource =>
-      log.info("become established")
-      context.become(established)
+  context.actorOf(rootProps, "root") ! GetState
 
-    case ReceiveTimeout =>
-      log.info("listen to '/root' timeout ")
-      context.actorSelection(`/root`) ! GetState
-      context.setReceiveTimeout(Duration.Undefined)
+  def receive = {
+    case Uninitialized =>
+      sender ! CreatingResource("root" :: Nil, Some("admin"), Some(Set("admin")))
+
+    case _: ResourceState =>
+      context.become(rootEstablished)
+      log.info("root is rootEstablished")
+    case m: AnyRef =>
+      log.error(s"unexpected message '$m'")
   }
 
-  val established: Receive = {
+  val rootEstablished: Receive = {
 
-    case CreateResource(resource, resourcePath) =>
-      context.actorSelection(`/root`) forward Handshaking(resource, None)
+    case CreateResource(path) =>
+      sender ! CreatingResource(path, None, None)
 
+    case c: CreatingResource =>
+      context.actorSelection(s"../${self.path.name}/root") forward c
   }
 
   override val supervisorStrategy =
