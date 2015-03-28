@@ -12,7 +12,7 @@ object ResourceAggregate {
 
   case class Created(owner: String, groups: Set[String]) extends Event
 
-  case class NewChild(name: String) extends Event
+  case class NewChild(name: String, persistenceId: String) extends Event
 
 }
 
@@ -27,16 +27,18 @@ class ResourceAggregate(uuid: String) extends PersistentActor with ActorLogging 
 
   def receiveCommand = {
 
-    case c@CreatingResource(x :: xs, Some(owner), Some(groups)) =>
+    case msg@CreatingResource(x :: xs, Some(owner), Some(groups)) =>
 
       persist(Created(owner, groups)) { evt =>
         updateState(evt)
+        log.info(s"'$x' is created")
         xs match {
           case Nil =>
             log.info(s"'$x' is the last one")
             sender ! state
           case _ =>
-            log.info(s"'$x' is created")
+            log.info(s"let's go to create further child")
+            self forward msg.copy(path = xs)
         }
       }
 
@@ -50,27 +52,38 @@ class ResourceAggregate(uuid: String) extends PersistentActor with ActorLogging 
     case GetState =>
       sender ! state
 
-    case c@CreatingResource(x :: xs, Some(owner), Some(groups)) =>
+    case msg@CreatingResource(x :: xs, Some(owner), Some(groups)) =>
 
       state match {
 
-        case ResourceState(_, _, children) if children.contains(x) =>
-          sender ! new Exception(s"$x is already exist")
+        case ResourceState(_, _, children) =>
 
-        case _: ResourceState =>
+          val existChild: Option[ActorRef]= context.child(x) match {
+            case Some(actorRef) =>
+              log.info(s"$x is already exist at context child")
+              Some(actorRef)
+            case None =>
+              children.get(x) match {
+                case Some(id) =>
+                  log.info(s"$x is already created before. Let's restore the ActorRef '$id'")
+                  Some(context.actorOf(Props(classOf[ResourceAggregate],id), x))
+                case None => None // means that you have to create new resource
+              }
+          }
 
-          val child = context.child(x).getOrElse( {
-            val resource = context.actorOf(Props(classOf[ResourceAggregate], UUID.randomUUID().toString), x)
-            resource forward c
-            persist(NewChild(x)){ evt => updateState(evt)}
-            resource
-          })
-
-          xs match {
-            case Nil =>
-              log.info("no more child to create")
-            case _ =>
-              child forward c.copy(xs)
+          existChild match {
+            case Some(actorRef) =>
+               actorRef forward (xs match {
+                  case Nil => GetState
+                  case _ =>
+                    log.info(s"let's go to create further child ${xs}")
+                    msg.copy(path = xs)
+                })
+            case None =>
+              log.info(s"'${self.path.name}' is creating new child")
+              val newChildId = UUID.randomUUID().toString
+              context.actorOf(Props(classOf[ResourceAggregate], newChildId), x) forward msg
+              persist(NewChild(x, newChildId)){ evt => updateState(evt)}
           }
       }
   }
@@ -79,10 +92,10 @@ class ResourceAggregate(uuid: String) extends PersistentActor with ActorLogging 
     case Created(owner, groups) =>
       state = ResourceState(owner, groups)
       context.become(established)
-    case NewChild(name) =>
+    case NewChild(name, id) =>
       state match {
         case r: ResourceState =>
-          state = r.copy(children = r.children + name)
+          state = r.copy(children = r.children + (name -> id))
       }
 
     case _ =>

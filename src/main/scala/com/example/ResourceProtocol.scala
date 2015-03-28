@@ -7,5 +7,5 @@ object ResourceProtocol {
 
   case class CreatingResource(path: List[String], owner: Option[String], groups: Option[Set[String]])
 
-  case class ResourceState(owner: String, groups: Set[String], children: Set[String] = Set[String]()) extends State
+  case class ResourceState(owner: String, groups: Set[String], children: Map[String, String] = Map[String, String]()) extends State
 }
