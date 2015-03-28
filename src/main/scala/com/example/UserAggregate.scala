@@ -7,6 +7,7 @@ import com.github.t3hnar.bcrypt._
 trait State
 trait Command
 trait Event
+
 case object GetState extends Command
 
 case object Uninitialized extends State
@@ -22,6 +23,10 @@ object UserAggregate {
   case class UserPasswordChanged(encryptedPass: String) extends Event
 
   def props(id: String): Props = Props(new UserAggregate(id))
+
+  trait Error
+
+  case object UserExist extends Error
 }
 
 class UserAggregate(id: String) extends PersistentActor {
@@ -48,7 +53,7 @@ class UserAggregate(id: String) extends PersistentActor {
     case GetState =>
       sender ! state
     case _: Initialize =>
-      sender ! "User has been initialized."
+      sender ! UserExist
   }
 
   def afterEventPersisted(evt: Event): Unit = {

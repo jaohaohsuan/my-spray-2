@@ -25,9 +25,8 @@ trait UserAuthenticator {
         (userAggregateManager ? GetUser(user)).map(_ match {
           case u: User if pass.isBcrypted(u.pass) =>
             Some(u)
-          case Uninitialized =>
-            throw new Exception(s"$user is not exist")
-          case _ => None
+          case _ =>
+            None
         })
       case None =>
         Future(None)

@@ -50,17 +50,17 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
         status === NotAcceptable
         val res: String = responseAs[String]
         println(pretty(render(parse(res))))
-        res must contain("You can not register without name.")
+        res must contain("blank name is not allowed")
 
-        responseAs[JsonCollection] === JsonCollection(URI.create("http://com.example/user"),
-          Error(title = "RegisterUser", code = None, message = Some("You can not register without name.")))
+        responseAs[JsonCollection] == JsonCollection(URI.create("http://com.example/user"),
+          Error(title = "/user/error", code = None, message = Some("blank name is not allowed")))
 
         body === HttpEntity(ContentType(`application/vnd.collection+json`, HttpCharsets.`UTF-8`), res)
       }
     }
-    
+
     "return password length is too short" in {
-      
+
       val template = """
         { "template" : {
             "data" : [
@@ -91,7 +91,7 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
 
       Post("/user", template) ~> userRoute ~> check {
         status === Accepted
-        headers must contain(RawHeader("Location", "/user/user-mark"))
+        headers must contain(RawHeader("Location", "/profile/info"))
       }
     }
 
@@ -99,7 +99,7 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
 
       val name = "henry"
       val pass = "origin?"
-      val user = createUserInManager(name, pass)
+      createUserInManager(name, pass)
 
       val changePassTemplate = """
       {
@@ -139,15 +139,15 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
       Post("/user", registerUser) ~> userRoute ~> check {
         status === Accepted
         val user = getUserFromManager("joe")
-        user.id === "user-joe"
+        user.id === "joe"
       }
       Post("/user", registerUser) ~> userRoute ~> check {
         status === NotAcceptable
         val user = getUserFromManager("joe")
-        user.id === "user-joe"
+        user.id === "joe"
         val res: String = responseAs[String]
         println(pretty(render(parse(res))))
-        res must contain("User has been initialized.")
+        res must contain("use another name")
 
       }
     }

@@ -98,8 +98,8 @@ class ResourceAggregate(uuid: String) extends PersistentActor with ActorLogging 
       context.become(established)
     case NewChild(name, id) =>
       state match {
-        case r: ResourceState =>
-          state = r.copy(children = r.children + (name -> id))
+        case s@ResourceState(_,_,_,children) =>
+          state = s.copy(children = children + (name -> id))
       }
 
     case _ =>

@@ -4,40 +4,67 @@ import java.net.URI
 
 import akka.actor.SupervisorStrategy._
 import akka.actor.{ ActorRef, _ }
+import com.example.UserAggregateManager.{PasswordStrengthError, BlankUsername}
 import net.hamnaberg.json.collection.{ Error, JsonCollection }
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
 import spray.routing.RequestContext
+
+object JsonCollectionExtensions {
+
+  implicit def autoConvert(message: String)(implicit uri: URI) = new {
+    def asJsonCollection = {
+      JsonCollection(uri, Error(title = "user/error", code = None, message =
+        Some(message)))
+    }
+  }
+}
 
 case class RegisterUserRequestActor(
     rtx: RequestContext,
     aggregateManager: ActorRef,
     message: AggregateManager.Command) extends RequestHandler {
 
-  val uri = URI.create("http://com.example/user")
+  implicit val uri = URI.create("http://com.example/user")
 
-  import com.example.UserAggregate._
+  import UserAggregate._
+  import JsonCollectionExtensions._
 
   def processResult = {
-    case error: String =>
+
+    case BlankUsername =>
       response {
-        complete(NotAcceptable, JsonCollection(uri, Error(title = "RegisterUser", code = None, message = Some(error))))
+        complete(NotAcceptable, "blank name is not allowed".asJsonCollection)
+      }
+    case PasswordStrengthError =>
+      response {
+        complete(NotAcceptable, "password length is too short".asJsonCollection)
+      }
+    case Uninitialized =>
+      response {
+        complete(NotAcceptable, "user is not exist".asJsonCollection)
+      }
+    case UserExist =>
+      response {
+        complete(NotAcceptable, "use another name".asJsonCollection)
       }
     case User(name, _) =>
       response {
-        respondWithHeader(RawHeader(s"Location", s"/user/$name")) {
-          //val item = Item(URI.create("/user/henry"), u, List[net.hamnaberg.json.collection.Link]())
-          //complete(Accepted,JsonCollection(URI.create("http://com.example/user"),List[Link](),item))
+        respondWithHeader(RawHeader(s"Location", s"/profile/info")) {
           complete(Accepted)
         }
       }
   }
 
+
+
   override val supervisorStrategy =
     OneForOneStrategy() {
-      case e => {
-
+      case e: Throwable => {
         Resume
       }
     }
 }
+
+
+

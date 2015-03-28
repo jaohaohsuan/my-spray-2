@@ -25,8 +25,6 @@ trait ResourceService extends HttpService with RequestHandlerCreator with Collec
 
     authenticate(BasicAuth(userAuthenticator _, realm = "personal")) { implicit user =>
 
-      //implicit val validUser: Option[UserAggregate.User] = Some(user)
-
       path( Segments ) { path =>
         get {
           complete(s"$path")

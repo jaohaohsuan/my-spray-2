@@ -38,8 +38,7 @@ trait UserService extends HttpService with RequestHandlerCreator with Collection
           )
         } ~
           post {
-            entity(as[RegisterUser]) { command =>
-              implicit ctx =>
+            entity(as[RegisterUser]) { command => implicit ctx =>
                 handle(command)
             }
           }

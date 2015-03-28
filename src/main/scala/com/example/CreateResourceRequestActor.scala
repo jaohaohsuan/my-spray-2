@@ -3,7 +3,7 @@ package com.example
 import java.net.URI
 
 import akka.actor.SupervisorStrategy._
-import akka.actor.{ ActorRef, _ }
+import akka.actor._
 import com.example.UserAggregateManager.GetUser
 import net.hamnaberg.json.collection.{ Error, JsonCollection }
 import spray.http.HttpHeaders.RawHeader

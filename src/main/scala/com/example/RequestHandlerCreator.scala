@@ -10,6 +10,7 @@ import spray.routing._
 
 import scala.concurrent.duration._
 
+
 trait RequestHandlerCreator {
   self: HttpService =>
 
