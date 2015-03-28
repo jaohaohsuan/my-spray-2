@@ -10,7 +10,7 @@ import com.sun.xml.internal.bind.v2.runtime.unmarshaller.XsiNilLoader
 
 object ResourceAggregate {
 
-  case class Created(owner: String, groups: Set[String]) extends Event
+  case class Created(content: AnyRef, owner: String, groups: Set[String]) extends Event
 
   case class NewChild(name: String, persistenceId: String) extends Event
 
@@ -22,14 +22,16 @@ class ResourceAggregate(uuid: String) extends PersistentActor with ActorLogging 
 
   var state: State = Uninitialized
 
+  //var permissions:
+
   import ResourceProtocol._
   import ResourceAggregate._
 
   def receiveCommand = {
 
-    case msg@CreatingResource(x :: xs, Some(owner), Some(groups)) =>
+    case msg@CreatingResource(x :: xs, content, Some(owner), Some(groups)) =>
 
-      persist(Created(owner, groups)) { evt =>
+      persist(Created(content ,owner, groups)) { evt =>
         updateState(evt)
         log.info(s"'$x' is created")
         xs match {
@@ -52,11 +54,13 @@ class ResourceAggregate(uuid: String) extends PersistentActor with ActorLogging 
     case GetState =>
       sender ! state
 
-    case msg@CreatingResource(x :: xs, Some(owner), Some(groups)) =>
+    case msg@CreatingResource(x :: xs, _, Some(owner), Some(userGroups)) =>
 
       state match {
 
-        case ResourceState(_, _, children) =>
+        case ResourceState(_, _, groups, _) if (groups & userGroups).size == 0 =>
+          sender ! "you do not have permission to access"
+        case ResourceState(_, _, groups, children) =>
 
           val existChild: Option[ActorRef]= context.child(x) match {
             case Some(actorRef) =>
@@ -89,8 +93,8 @@ class ResourceAggregate(uuid: String) extends PersistentActor with ActorLogging 
   }
 
   def updateState(evt: Event): Unit = evt match {
-    case Created(owner, groups) =>
-      state = ResourceState(owner, groups)
+    case Created(content ,owner, groups) =>
+      state = ResourceState(content,owner, groups)
       context.become(established)
     case NewChild(name, id) =>
       state match {

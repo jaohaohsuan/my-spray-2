@@ -15,7 +15,7 @@ import scala.language.postfixOps
 
 object ResourceAggregateManager {
 
-  case class CreateResource(path: List[String]) extends AggregateManager.Command
+  case class CreateResource(path: List[String], content: AnyRef) extends AggregateManager.Command
 
 }
 
@@ -31,7 +31,7 @@ class ResourceAggregateManager extends Actor with ActorLogging {
 
   def receive = {
     case Uninitialized =>
-      sender ! CreatingResource("root" :: Nil, Some("admin"), Some(Set("admin")))
+      sender ! CreatingResource("root" :: Nil, null, Some("admin"), Some(Set("admin")))
 
     case _: ResourceState =>
       context.become(rootEstablished)
@@ -42,8 +42,8 @@ class ResourceAggregateManager extends Actor with ActorLogging {
 
   val rootEstablished: Receive = {
 
-    case CreateResource(path) =>
-      sender ! CreatingResource(path, None, None)
+    case CreateResource(path, content) =>
+      sender ! CreatingResource(path, content, None, None)
 
     case c: CreatingResource =>
       context.actorSelection(s"../${self.path.name}/root") forward c

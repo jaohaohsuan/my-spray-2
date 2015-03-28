@@ -23,9 +23,9 @@ trait ResourceService extends HttpService with RequestHandlerCreator with Collec
 
   val resourceRoute = pathPrefix("resources") {
 
-    authenticate(BasicAuth(userAuthenticator _, realm = "personal")) { user =>
+    authenticate(BasicAuth(userAuthenticator _, realm = "personal")) { implicit user =>
 
-      implicit val validUser: Option[UserAggregate.User] = Some(user)
+      //implicit val validUser: Option[UserAggregate.User] = Some(user)
 
       path( Segments ) { path =>
         get {
@@ -35,7 +35,7 @@ trait ResourceService extends HttpService with RequestHandlerCreator with Collec
             import ResourceAggregateManager._
             entity(as[EsQuery]) { data =>
               implicit ctx =>
-                handle(CreateResource(path))
+                handle(CreateResource(path, data))
             }
           } ~
           delete {

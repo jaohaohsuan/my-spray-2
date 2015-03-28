@@ -29,6 +29,9 @@ trait UserService extends HttpService with RequestHandlerCreator with Collection
   var userRoute = pathPrefix("user") {
     respondWithMediaType(`application/vnd.collection+json`) {
       pathEndOrSingleSlash {
+
+        implicit val anonymous= UserAggregate.User("0.0.0.0","")
+
         get {
           complete(OK,
             JsonCollection(globalUri, Nil, Nil, Nil, RegisterUser("username", "password"))
@@ -47,7 +50,7 @@ trait UserService extends HttpService with RequestHandlerCreator with Collection
           )
         }
         put {
-          authenticate(BasicAuth(userAuthenticator _, realm = "personal")) { user =>
+          authenticate(BasicAuth(userAuthenticator _, realm = "personal")) { implicit user =>
             entity(as[UserService.ChangePasswordRequest]) { e =>
               implicit ctx =>
                 handle(ChangeUserPassword(user.id, e.pass))

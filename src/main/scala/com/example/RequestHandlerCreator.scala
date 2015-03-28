@@ -17,16 +17,10 @@ trait RequestHandlerCreator {
   import UserAggregateManager._
   import ResourceAggregateManager._
 
-  def handle(message: AggregateManager.Command)(implicit rtx: RequestContext, aggregateManager: ActorRef, user: Option[User] = None) =
+  def handle(message: AggregateManager.Command)(implicit rtx: RequestContext, aggregateManager: ActorRef, user: User) =
     message match {
       case _: RegisterUser => actorRefFactory.actorOf(Props(RegisterUserRequestActor(rtx, aggregateManager, message)))
       case _: ChangeUserPassword => actorRefFactory.actorOf(Props(ChangeUserPasswordRequestActor(rtx, aggregateManager, message)))
-      case _: CreateResource =>
-        user match {
-          case Some(u) =>
-            actorRefFactory.actorOf(Props(CreateResourceRequestActor(rtx, aggregateManager, u, message)))
-          case None =>
-            rtx.complete(InternalServerError, "unexpected user is None")
-        }
+      case _: CreateResource => actorRefFactory.actorOf(Props(CreateResourceRequestActor(rtx, aggregateManager, user, message)))
     }
 }
