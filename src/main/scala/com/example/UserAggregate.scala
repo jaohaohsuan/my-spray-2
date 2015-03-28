@@ -1,11 +1,16 @@
 package com.example
 
+import java.util.UUID
+
 import akka.actor._
 import akka.persistence._
+import com.example.UserAggregateManager.GetUser
 import com.github.t3hnar.bcrypt._
 
 trait State
+
 trait Command
+
 trait Event
 
 case object GetState extends Command
@@ -14,12 +19,16 @@ case object Uninitialized extends State
 
 object UserAggregate {
 
-  case class User(id: String, pass: String) extends State
-
+  case class User(name: String, pass: String) extends State
+  
   case class Initialize(pass: String) extends Command
+
   case class ChangePassword(pass: String) extends Command
 
+  case class UserAdded(name: String, id: String) extends Event
+
   case class UserInitialized(encryptedPass: String) extends Event
+
   case class UserPasswordChanged(encryptedPass: String) extends Event
 
   def props(id: String): Props = Props(new UserAggregate(id))
@@ -27,13 +36,14 @@ object UserAggregate {
   trait Error
 
   case object UserExist extends Error
+
 }
 
-class UserAggregate(id: String) extends PersistentActor {
+class UserAggregate(uuid: String) extends PersistentActor with ActorLogging {
 
   import com.example.UserAggregate._
 
-  override def persistenceId = id
+  override def persistenceId = uuid
 
   var state: State = Uninitialized
 
@@ -42,9 +52,6 @@ class UserAggregate(id: String) extends PersistentActor {
   val initial: Receive = {
     case Initialize(pass) if pass.length > 5 =>
       persist(UserInitialized(pass.bcrypt))(afterEventPersisted)
-    case _ =>
-      sender ! state
-      context stop self
   }
 
   val created: Receive = {
@@ -52,8 +59,8 @@ class UserAggregate(id: String) extends PersistentActor {
       persist(UserPasswordChanged(newPass.bcrypt))(afterEventPersisted)
     case GetState =>
       sender ! state
-    case _: Initialize =>
-      sender ! UserExist
+    case e =>
+      log.error(s"unexpected $e")
   }
 
   def afterEventPersisted(evt: Event): Unit = {
@@ -63,7 +70,7 @@ class UserAggregate(id: String) extends PersistentActor {
 
   def updateState(evt: Event): Unit = evt match {
     case UserInitialized(pass) =>
-      state = User(id, pass)
+      state = User(self.path.name, pass)
       context.become(created)
     case UserPasswordChanged(newPass) =>
       state match {

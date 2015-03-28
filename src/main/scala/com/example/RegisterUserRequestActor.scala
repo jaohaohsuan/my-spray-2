@@ -5,19 +5,14 @@ import java.net.URI
 import akka.actor.SupervisorStrategy._
 import akka.actor.{ ActorRef, _ }
 import com.example.UserAggregateManager.{PasswordStrengthError, BlankUsername}
-import net.hamnaberg.json.collection.{ Error, JsonCollection }
+import net.hamnaberg.json.collection.{Error, JsonCollection}
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
 import spray.routing.RequestContext
 
 object JsonCollectionExtensions {
 
-  implicit def autoConvert(message: String)(implicit uri: URI) = new {
-    def asJsonCollection = {
-      JsonCollection(uri, Error(title = "user/error", code = None, message =
-        Some(message)))
-    }
-  }
+
 }
 
 case class RegisterUserRequestActor(
@@ -28,25 +23,24 @@ case class RegisterUserRequestActor(
   implicit val uri = URI.create("http://com.example/user")
 
   import UserAggregate._
-  import JsonCollectionExtensions._
 
   def processResult = {
 
     case BlankUsername =>
       response {
-        complete(NotAcceptable, "blank name is not allowed".asJsonCollection)
+        complete(NotAcceptable, asJsonCollection("blank name is not allowed"))
       }
     case PasswordStrengthError =>
       response {
-        complete(NotAcceptable, "password length is too short".asJsonCollection)
+        complete(NotAcceptable, asJsonCollection("password length is too short"))
       }
     case Uninitialized =>
       response {
-        complete(NotAcceptable, "user is not exist".asJsonCollection)
+        complete(NotAcceptable, asJsonCollection("user is not exist"))
       }
     case UserExist =>
       response {
-        complete(NotAcceptable, "use another name".asJsonCollection)
+        complete(NotAcceptable, asJsonCollection("use another name"))
       }
     case User(name, _) =>
       response {
@@ -56,7 +50,10 @@ case class RegisterUserRequestActor(
       }
   }
 
-
+  def asJsonCollection(message: String) = {
+    JsonCollection(uri, Error(title = "user/error", code = None, message =
+      Some(message)))
+  }
 
   override val supervisorStrategy =
     OneForOneStrategy() {

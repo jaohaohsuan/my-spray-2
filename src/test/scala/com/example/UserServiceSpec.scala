@@ -95,11 +95,31 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
       }
     }
 
+    "try to change non-exist user should be rejected" in {
+
+      val cred = BasicHttpCredentials("san", "123456")
+
+      val changePassTemplate = """
+      {
+        "template" : {
+          "data" : [
+             { "name" : "pass", "value" : "new", "prompt" : "new password" }
+          ]
+        }
+      } """
+
+      Put("/user/password", changePassTemplate) ~>
+        addCredentials(cred) ~>
+        userRoute ~> check {
+        handled must beFalse
+      }
+    }
+
     "change user password" in {
 
       val name = "henry"
       val pass = "origin?"
-      createUserInManager(name, pass)
+      val user = createUserInManager(name, pass)
 
       val changePassTemplate = """
       {
@@ -139,12 +159,12 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
       Post("/user", registerUser) ~> userRoute ~> check {
         status === Accepted
         val user = getUserFromManager("joe")
-        user.id === "joe"
+        user.name === "joe"
       }
       Post("/user", registerUser) ~> userRoute ~> check {
         status === NotAcceptable
         val user = getUserFromManager("joe")
-        user.id === "joe"
+        user.name === "joe"
         val res: String = responseAs[String]
         println(pretty(render(parse(res))))
         res must contain("use another name")
@@ -152,35 +172,15 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
       }
     }
 
-    "try to change non-exist user should be rejected" in {
-
-      val cred = BasicHttpCredentials("san", "123456")
-
-      val changePassTemplate = """
-      {
-        "template" : {
-          "data" : [
-             { "name" : "pass", "value" : "new", "prompt" : "new password" }
-          ]
-        }
-      } """
-
-      Put("/user/password", changePassTemplate) ~>
-        addCredentials(cred) ~>
-        userRoute ~> check {
-        handled must beFalse
-      }
-    }
-
   }
 
   private def getUserFromManager(name: String) = {
     val f = (userAggregateManager ? GetUser(name)).mapTo[User]
-    Await.result(f, 2.0 seconds)
+    Await.result(f, 20.0 seconds)
   }
 
   private def createUserInManager(name: String, pass: String) = {
     val f = (userAggregateManager ? RegisterUser(name, pass)).mapTo[User]
-    Await.result(f, 2.0 seconds)
+    Await.result(f, 20.0 seconds)
   }
 }

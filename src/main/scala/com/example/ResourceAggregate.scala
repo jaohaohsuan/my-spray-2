@@ -49,7 +49,11 @@ class ResourceAggregate(uuid: String) extends PersistentActor with ActorLogging 
 
   }
 
+
+
   val established: Receive = {
+
+
 
     case GetState =>
       sender ! state

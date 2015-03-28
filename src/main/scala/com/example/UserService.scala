@@ -52,7 +52,7 @@ trait UserService extends HttpService with RequestHandlerCreator with Collection
           authenticate(BasicAuth(userAuthenticator _, realm = "personal")) { implicit user =>
             entity(as[UserService.ChangePasswordRequest]) { e =>
               implicit ctx =>
-                handle(ChangeUserPassword(user.id, e.pass))
+                handle(ChangeUserPassword(user.name, e.pass))
             }
           }
         }

@@ -23,7 +23,7 @@ case class CreateResourceRequestActor(
 
   def processResult: Receive = {
     case cmd: CreatingResource =>
-      sender ! cmd.copy(owner = Some(user.id), groups = Some(Set("admin")))
+      sender ! cmd.copy(owner = Some(user.name), groups = Some(Set("admin")))
     case r: ResourceState =>
       response {
         complete(OK, r)
