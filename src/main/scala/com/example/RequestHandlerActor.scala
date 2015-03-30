@@ -3,7 +3,7 @@ package com.example
 import akka.actor._
 import spray.http.StatusCodes._
 import spray.routing._
-
+import java.net.URI
 import scala.concurrent.duration._
 
 trait RequestHandler extends Actor with Directives with CollectionJsonSupport with ActorLogging {
@@ -11,7 +11,9 @@ trait RequestHandler extends Actor with Directives with CollectionJsonSupport wi
   import context._
 
   def rtx: RequestContext
+
   def aggregateManager: ActorRef
+
   def message: AggregateManager.Command
 
   setReceiveTimeout(2.seconds)
@@ -34,7 +36,8 @@ trait RequestHandler extends Actor with Directives with CollectionJsonSupport wi
 
   def response(finalStep: Route): Unit = {
     finalStep(rtx)
-    stop(self)
   }
+
+
 }
 

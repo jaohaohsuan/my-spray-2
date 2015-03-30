@@ -13,7 +13,7 @@ resolvers ++= Seq(
 
 libraryDependencies ++= {
   val akkaVersion      = "2.3.9"
-  val sprayVersion     = "1.3.2"
+  val sprayVersion     = "1.3.3"
   Seq(
     "io.spray"               %% "spray-can"                     % sprayVersion,
     "io.spray"               %% "spray-routing"                 % sprayVersion,
@@ -31,7 +31,8 @@ libraryDependencies ++= {
     "org.json4s"             %% "json4s-native"                 % "3.2.11",
     //"org.apache.camel"     %  "camel-scala"                   % "2.14.1",
     "com.github.t3hnar"      %% "scala-bcrypt"                  % "2.4",
-    "com.sksamuel.elastic4s" %% "elastic4s"                     % "1.4.13"
+    "com.sksamuel.elastic4s" %% "elastic4s"                     % "1.4.13",
+    "com.github.nscala-time" %% "nscala-time" % "1.8.0"
   )
 }
 

@@ -25,7 +25,7 @@ trait ResourceService extends HttpService with RequestHandlerCreator with Collec
 
     authenticate(BasicAuth(userAuthenticator _, realm = "personal")) { implicit user =>
 
-      path( Segments ) { path =>
+      path(Segments) { path =>
         get {
           complete(s"$path")
         } ~

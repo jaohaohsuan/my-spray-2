@@ -39,7 +39,6 @@ class ElasticDemo1ServiceSpec extends Specification with Specs2RouteTest with El
         responseAs[String] === "1234"
       }
 
-
     }
   }
 }

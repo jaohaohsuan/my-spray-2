@@ -3,8 +3,7 @@ package com.example
 import akka.actor._
 import java.util.{ UUID }
 import akka.actor.SupervisorStrategy.{ Resume, Stop }
-import com.example.ResourceProtocol.{CreatingResource, ResourceState}
-
+import com.example.ResourceProtocol.{ CreatingResource, ResourceState }
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -23,7 +22,6 @@ class ResourceAggregateManager extends Actor with ActorLogging {
 
   import ResourceAggregateManager._
   import ResourceProtocol._
-
 
   val rootProps = Props(classOf[ResourceAggregate], "7e5db785-d738-4679-8ae2-45b3b70cfe82")
 

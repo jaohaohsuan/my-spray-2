@@ -6,9 +6,9 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.example.CollectionJsonProtocol.`application/vnd.collection+json`
 import com.example.UserAggregate.User
-import com.example.UserAggregateManager.{GetUser, RegisterUser}
+import com.example.UserAggregateManager.{ GetUser, RegisterUser }
 import com.github.t3hnar.bcrypt._
-import net.hamnaberg.json.collection.{Error, JsonCollection}
+import net.hamnaberg.json.collection.{ Error, JsonCollection }
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.specs2.mutable.Specification
@@ -44,7 +44,7 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
         }
       } """
 
-      Post("/user", unnamedTemplate) ~> userRoute ~> check {
+      Post("/user", unnamedTemplate).withHeaders(`Remote-Address`("127.0.0.1")) ~> userRoute ~> check {
         handled must beTrue
         mediaType === `application/vnd.collection+json`
         status === NotAcceptable
@@ -52,8 +52,8 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
         println(pretty(render(parse(res))))
         res must contain("blank name is not allowed")
 
-        responseAs[JsonCollection] == JsonCollection(URI.create("http://com.example/user"),
-          Error(title = "/user/error", code = None, message = Some("blank name is not allowed")))
+//        responseAs[JsonCollection] === JsonCollection(URI.create("http://com.example/user"),
+//          Error(title = "/user/error", code = None, message = Some("blank name is not allowed")))
 
         body === HttpEntity(ContentType(`application/vnd.collection+json`, HttpCharsets.`UTF-8`), res)
       }
@@ -71,7 +71,7 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
         }
       """
 
-      Post("/user", template) ~> userRoute ~> check {
+      Post("/user", template).withHeaders(`Remote-Address`("127.0.0.1")) ~> userRoute ~> check {
         status === NotAcceptable
         responseAs[String] must contain("password length is too short")
       }
@@ -89,8 +89,8 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
         }
       }"""
 
-      Post("/user", template) ~> userRoute ~> check {
-        status === Accepted
+      Post("/user", template).withHeaders(`Remote-Address`("127.0.0.1")) ~> userRoute ~> check {
+        status === Created
         headers must contain(RawHeader("Location", "/profile/info"))
       }
     }
@@ -111,8 +111,8 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
       Put("/user/password", changePassTemplate) ~>
         addCredentials(cred) ~>
         userRoute ~> check {
-        handled must beFalse
-      }
+          handled must beFalse
+        }
     }
 
     "change user password" in {
@@ -146,22 +146,22 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
 
       val registerUser =
         """
-        {
-          "template" : {
-                    "data" : [
-                       { "name" : "name", "value" : "joe", "prompt" : "username" },
-                       { "name" : "pass", "value" : "password1", "prompt" : "password" }
-                    ]
-                  }
-        }
-        """
+            {
+              "template" : {
+                        "data" : [
+                           { "name" : "name", "value" : "joe", "prompt" : "username" },
+                           { "name" : "pass", "value" : "password1", "prompt" : "password" }
+                        ]
+                      }
+            }
+            """
 
-      Post("/user", registerUser) ~> userRoute ~> check {
-        status === Accepted
+      Post("/user", registerUser).withHeaders(`Remote-Address`("127.0.0.1")) ~> userRoute ~> check {
+        status === Created
         val user = getUserFromManager("joe")
         user.name === "joe"
       }
-      Post("/user", registerUser) ~> userRoute ~> check {
+      Post("/user", registerUser).withHeaders(`Remote-Address`("127.0.0.1")) ~> userRoute ~> check {
         status === NotAcceptable
         val user = getUserFromManager("joe")
         user.name === "joe"
@@ -176,11 +176,11 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
 
   private def getUserFromManager(name: String) = {
     val f = (userAggregateManager ? GetUser(name)).mapTo[User]
-    Await.result(f, 20.0 seconds)
+    Await.result(f, 2.0 seconds)
   }
 
   private def createUserInManager(name: String, pass: String) = {
     val f = (userAggregateManager ? RegisterUser(name, pass)).mapTo[User]
-    Await.result(f, 20.0 seconds)
+    Await.result(f, 2.0 seconds)
   }
 }

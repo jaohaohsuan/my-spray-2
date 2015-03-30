@@ -66,8 +66,8 @@ class UserAggregateManager extends PersistentActor with ActorLogging {
       }
   }
 
-  val processReading: Receive ={
-    case msg@GetUser(name) =>
+  val processReading: Receive = {
+    case msg @ GetUser(name) =>
       users.get(name) match {
         case Some(id) =>
           context.child(name).getOrElse(context.actorOf(Props(classOf[UserAggregate], id), name)) forward GetState

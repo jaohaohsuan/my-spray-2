@@ -4,23 +4,23 @@ import java.net.URI
 
 import akka.actor.SupervisorStrategy._
 import akka.actor.{ ActorRef, _ }
-import com.example.UserAggregateManager.{PasswordStrengthError, BlankUsername}
-import net.hamnaberg.json.collection.{Error, JsonCollection}
+import com.example.UserAggregateManager.{ PasswordStrengthError, BlankUsername }
+import net.hamnaberg.json.collection.{JsonCollection, Error}
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
-import spray.routing.RequestContext
+import spray.routing.{RejectionHandler, RequestContext, Rejection}
+
 
 object JsonCollectionExtensions {
 
-
 }
+
+case class RegisterUserRejection(reason: String) extends Rejection
 
 case class RegisterUserRequestActor(
     rtx: RequestContext,
     aggregateManager: ActorRef,
     message: AggregateManager.Command) extends RequestHandler {
-
-  implicit val uri = URI.create("http://com.example/user")
 
   import UserAggregate._
 
@@ -28,31 +28,26 @@ case class RegisterUserRequestActor(
 
     case BlankUsername =>
       response {
-        complete(NotAcceptable, asJsonCollection("blank name is not allowed"))
+        reject(RegisterUserRejection("blank name is not allowed"))
       }
     case PasswordStrengthError =>
       response {
-        complete(NotAcceptable, asJsonCollection("password length is too short"))
+        reject(RegisterUserRejection("password length is too short"))
       }
     case Uninitialized =>
       response {
-        complete(NotAcceptable, asJsonCollection("user is not exist"))
+        reject(RegisterUserRejection("user is not exist"))
       }
     case UserExist =>
       response {
-        complete(NotAcceptable, asJsonCollection("use another name"))
+        reject(RegisterUserRejection("use another name"))
       }
     case User(name, _) =>
       response {
         respondWithHeader(RawHeader(s"Location", s"/profile/info")) {
-          complete(Accepted)
+          complete(Created)
         }
       }
-  }
-
-  def asJsonCollection(message: String) = {
-    JsonCollection(uri, Error(title = "user/error", code = None, message =
-      Some(message)))
   }
 
   override val supervisorStrategy =
@@ -62,6 +57,4 @@ case class RegisterUserRequestActor(
       }
     }
 }
-
-
 

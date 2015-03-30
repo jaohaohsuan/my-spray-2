@@ -24,35 +24,53 @@ trait UserService extends HttpService with RequestHandlerCreator with Collection
   import com.example.UserAggregateManager._
   import com.example.implicitTemplateConversions._
 
-  val globalUri = URI.create("http://example.com/user")
+
+  val registerUserRejectionHandler = RejectionHandler {
+    case RegisterUserRejection(reason) :: _ => {
+      requestUri { uri =>
+        complete(NotAcceptable, JsonCollection(URI.create(uri.toString), Error(title = "user/error", code = None, message =
+          Some(reason))))
+      }
+    }
+  }
 
   var userRoute = pathPrefix("user") {
-    respondWithMediaType(`application/vnd.collection+json`) {
-      pathEndOrSingleSlash {
+    requestUri { uri =>
+      val globalUri = URI.create(uri.toString)
+      respondWithMediaType(`application/vnd.collection+json`) {
+        pathEndOrSingleSlash {
 
-        implicit val anonymous= UserAggregate.User("0.0.0.0","")
+          clientIP { ip =>
 
-        get {
-          complete(OK,
-            JsonCollection(globalUri, Nil, Nil, Nil, RegisterUser("username", "password"))
-          )
-        } ~
-          post {
-            entity(as[RegisterUser]) { command => implicit ctx =>
-                handle(command)
+            implicit val anonymous = UserAggregate.User(ip.toOption.map(_.getHostAddress).getOrElse("unknown"), "")
+
+            get {
+              complete(OK,
+                JsonCollection(globalUri, Nil, Nil, Nil, RegisterUser("", ""))
+              )
+            } ~
+            post {
+              handleRejections(registerUserRejectionHandler) {
+                entity(as[RegisterUser]) { command =>
+                  implicit ctx =>
+                    handle(command)
+                }
+              }
             }
           }
-      } ~ path("password") {
-        get {
-          complete(OK,
-            JsonCollection(globalUri, Nil, Nil, Nil, ChangeUserPassword("", ""))
-          )
-        }
-        put {
-          authenticate(BasicAuth(userAuthenticator _, realm = "personal")) { implicit user =>
-            entity(as[UserService.ChangePasswordRequest]) { e =>
-              implicit ctx =>
-                handle(ChangeUserPassword(user.name, e.pass))
+
+        } ~ path("password") {
+          get {
+            complete(OK,
+              JsonCollection(globalUri, Nil, Nil, Nil, ChangeUserPassword("", ""))
+            )
+          }
+          put {
+            authenticate(BasicAuth(userAuthenticator _, realm = "personal")) { implicit user =>
+              entity(as[UserService.ChangePasswordRequest]) { e =>
+                implicit ctx =>
+                  handle(ChangeUserPassword(user.name, e.pass))
+              }
             }
           }
         }

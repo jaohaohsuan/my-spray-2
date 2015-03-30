@@ -1,10 +1,7 @@
 package com.example
 
-import java.util.UUID
-
 import akka.actor._
 import akka.persistence._
-import com.example.UserAggregateManager.GetUser
 import com.github.t3hnar.bcrypt._
 
 trait State
@@ -20,7 +17,7 @@ case object Uninitialized extends State
 object UserAggregate {
 
   case class User(name: String, pass: String) extends State
-  
+
   case class Initialize(pass: String) extends Command
 
   case class ChangePassword(pass: String) extends Command
