@@ -24,7 +24,6 @@ trait UserService extends HttpService with RequestHandlerCreator with Collection
   import com.example.UserAggregateManager._
   import com.example.implicitTemplateConversions._
 
-
   val registerUserRejectionHandler = RejectionHandler {
     case RegisterUserRejection(reason) :: _ => {
       requestUri { uri =>
@@ -49,14 +48,14 @@ trait UserService extends HttpService with RequestHandlerCreator with Collection
                 JsonCollection(globalUri, Nil, Nil, Nil, RegisterUser("", ""))
               )
             } ~
-            post {
-              handleRejections(registerUserRejectionHandler) {
-                entity(as[RegisterUser]) { command =>
-                  implicit ctx =>
-                    handle(command)
+              post {
+                handleRejections(registerUserRejectionHandler) {
+                  entity(as[RegisterUser]) { command =>
+                    implicit ctx =>
+                      handle(command)
+                  }
                 }
               }
-            }
           }
 
         } ~ path("password") {

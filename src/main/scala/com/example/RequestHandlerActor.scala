@@ -38,6 +38,5 @@ trait RequestHandler extends Actor with Directives with CollectionJsonSupport wi
     finalStep(rtx)
   }
 
-
 }
 

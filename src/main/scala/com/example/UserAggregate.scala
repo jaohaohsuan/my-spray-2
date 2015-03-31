@@ -43,6 +43,7 @@ class UserAggregate(uuid: String) extends PersistentActor with ActorLogging {
   override def persistenceId = uuid
 
   var state: State = Uninitialized
+  var groups = Set[String]()
 
   //only concern about how to create event, do not write anything after persisted event logic
 
@@ -54,6 +55,7 @@ class UserAggregate(uuid: String) extends PersistentActor with ActorLogging {
   val created: Receive = {
     case ChangePassword(newPass) if newPass.length > 5 =>
       persist(UserPasswordChanged(newPass.bcrypt))(afterEventPersisted)
+
     case GetState =>
       sender ! state
     case e =>
@@ -68,6 +70,7 @@ class UserAggregate(uuid: String) extends PersistentActor with ActorLogging {
   def updateState(evt: Event): Unit = evt match {
     case UserInitialized(pass) =>
       state = User(self.path.name, pass)
+      groups = Set(self.path.name)
       context.become(created)
     case UserPasswordChanged(newPass) =>
       state match {

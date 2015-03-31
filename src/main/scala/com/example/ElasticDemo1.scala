@@ -61,7 +61,6 @@ trait ElasticDemo1 extends HttpService with elastic {
               complete(InternalServerError, ex.getMessage)
           }
         }
-
       }
   }
 }

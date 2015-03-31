@@ -21,7 +21,7 @@ class ElasticDemo1ServiceSpec extends Specification with Specs2RouteTest with El
 
   val settings = ImmutableSettings.settingsBuilder()
     .put("http.enabled", false)
-    .put("path.home", "/Users/henry/Downloads/elasticsearch-1.4.4/data/local")
+    //.put("path.home", "../elasticsearch-1.4.4/data/")
 
   val client = ElasticClient.local(settings.build)
 

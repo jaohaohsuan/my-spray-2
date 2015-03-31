@@ -5,11 +5,10 @@ import java.net.URI
 import akka.actor.SupervisorStrategy._
 import akka.actor.{ ActorRef, _ }
 import com.example.UserAggregateManager.{ PasswordStrengthError, BlankUsername }
-import net.hamnaberg.json.collection.{JsonCollection, Error}
+import net.hamnaberg.json.collection.{ JsonCollection, Error }
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
-import spray.routing.{RejectionHandler, RequestContext, Rejection}
-
+import spray.routing.{ RejectionHandler, RequestContext, Rejection }
 
 object JsonCollectionExtensions {
 
