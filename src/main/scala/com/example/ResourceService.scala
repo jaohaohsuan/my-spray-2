@@ -37,7 +37,7 @@ trait ResourceService extends HttpService with RequestHandlerCreator with Collec
             }
           } ~
           delete {
-            complete(OK)
+            complete(InternalServerError)
           }
       }
     }

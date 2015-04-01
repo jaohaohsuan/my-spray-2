@@ -52,8 +52,8 @@ class UserServiceSpec extends Specification with Specs2RouteTest with UserServic
         println(pretty(render(parse(res))))
         res must contain("blank name is not allowed")
 
-//        responseAs[JsonCollection] === JsonCollection(URI.create("http://com.example/user"),
-//          Error(title = "/user/error", code = None, message = Some("blank name is not allowed")))
+        //        responseAs[JsonCollection] === JsonCollection(URI.create("http://com.example/user"),
+        //          Error(title = "/user/error", code = None, message = Some("blank name is not allowed")))
 
         body === HttpEntity(ContentType(`application/vnd.collection+json`, HttpCharsets.`UTF-8`), res)
       }

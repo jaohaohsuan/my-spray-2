@@ -35,7 +35,10 @@ trait RequestHandler extends Actor with Directives with CollectionJsonSupport wi
   }
 
   def response(finalStep: Route): Unit = {
-    finalStep(rtx)
+    respondWithMediaType(CollectionJsonProtocol.`application/vnd.collection+json`) {
+        finalStep
+    }(rtx)
+    stop(self)
   }
 
 }

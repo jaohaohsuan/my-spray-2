@@ -3,25 +3,24 @@ package com.example
 import java.net.URI
 
 import akka.actor.SupervisorStrategy._
-import akka.actor.{ ActorRef, _ }
-import com.example.UserAggregateManager.{ PasswordStrengthError, BlankUsername }
-import net.hamnaberg.json.collection.{ JsonCollection, Error }
+import akka.actor.{ActorRef, _}
+import com.example.UserAggregateManager.{PasswordStrengthError, BlankUsername}
+import net.hamnaberg.json.collection.{Link, Item, JsonCollection, Error}
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
-import spray.routing.{ RejectionHandler, RequestContext, Rejection }
+import spray.routing.{RejectionHandler, RequestContext, Rejection}
 
-object JsonCollectionExtensions {
-
-}
 
 case class RegisterUserRejection(reason: String) extends Rejection
 
 case class RegisterUserRequestActor(
-    rtx: RequestContext,
-    aggregateManager: ActorRef,
-    message: AggregateManager.Command) extends RequestHandler {
+                                     rtx: RequestContext,
+                                     aggregateManager: ActorRef,
+                                     message: AggregateManager.Command) extends RequestHandler {
 
   import UserAggregate._
+
+  implicit val uri = rtx.request.uri
 
   def processResult = {
 
@@ -41,12 +40,19 @@ case class RegisterUserRequestActor(
       response {
         reject(RegisterUserRejection("use another name"))
       }
-    case User(name, _) =>
+    case u@User(name, _) =>
       response {
+        inspect
         respondWithHeader(RawHeader(s"Location", s"/profile/info")) {
-          complete(Created)
+          val href = URI.create(s"${uri.withPath(spray.http.Uri.Path("/profile/info"))}")
+          val item = Item(href, u, Nil)
+          complete(Created, JsonCollection(item))
         }
       }
+  }
+
+  def inspect(implicit url: spray.http.Uri): Unit = {
+
   }
 
   override val supervisorStrategy =

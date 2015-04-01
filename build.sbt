@@ -32,7 +32,8 @@ libraryDependencies ++= {
     //"org.apache.camel"     %  "camel-scala"                   % "2.14.1",
     "com.github.t3hnar"      %% "scala-bcrypt"                  % "2.4",
     "com.sksamuel.elastic4s" %% "elastic4s"                     % "1.4.13",
-    "com.github.nscala-time" %% "nscala-time" % "1.8.0"
+    "com.github.nscala-time" %% "nscala-time" % "1.8.0",
+    "org.scalatest" %% "scalatest" % "2.2.0" % "test"
   )
 }
 

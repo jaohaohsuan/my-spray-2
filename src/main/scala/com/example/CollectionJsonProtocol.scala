@@ -1,6 +1,7 @@
 package com.example
 
 import net.hamnaberg.json.collection._
+import net.hamnaberg.json.collection.data._
 import org.json4s.Formats
 import org.json4s.native.JsonMethods._
 import spray.http._
@@ -8,9 +9,20 @@ import spray.httpx.Json4sSupport
 import spray.httpx.marshalling._
 import spray.httpx.unmarshalling._
 
+
+//object Template {
+//
+//  def unapply[T<: AnyRef: Manifest](template: Template): Option[T] = {
+//    implicit val json4sFormats: Formats = org.json4s.DefaultFormats
+//    new JavaReflectionData[T].unapply(template.data)
+//  }
+//}
+
 object CollectionJsonProtocol {
+
   val `application/vnd.collection+json` =
     MediaTypes.register(MediaType.custom("application/vnd.collection+json"))
+
 }
 
 trait CollectionJsonSupport extends Json4sSupport {
@@ -18,6 +30,14 @@ trait CollectionJsonSupport extends Json4sSupport {
   import com.example.CollectionJsonProtocol._
 
   implicit def json4sFormats: Formats = org.json4s.DefaultFormats
+
+  implicit def dataApply[T <: AnyRef: Manifest]: DataApply[T] = {
+    new data.JavaReflectionData[T]
+  }
+
+  implicit def dataExtractor[T <: AnyRef: Manifest]: DataExtractor[T] = {
+    new data.JavaReflectionData[T]
+  }
 
   implicit val templateUnmarshaller: Unmarshaller[Template] =
     Unmarshaller[Template](`application/vnd.collection+json`) {
@@ -33,6 +53,14 @@ trait CollectionJsonSupport extends Json4sSupport {
 
   implicit def templateObjectUnmarshaller[T <: AnyRef: Manifest]: Unmarshaller[T] =
     Unmarshaller.delegate[Template, T](`application/vnd.collection+json`) { template =>
+
+//      template match {
+//        case Template(Some(o)) =>
+//          throw new Exception(s"${o}")
+//        case _ =>
+//          throw new Exception(s"Unable to convert Template to '$manifest.getClass.getName' class.")
+//      }
+
       new data.JavaReflectionData[T].unapply(template.data) match {
         case Some(o) => o
         case None =>
