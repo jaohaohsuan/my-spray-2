@@ -40,7 +40,7 @@ usr: "san", url: "grandys/rd1", structure: "/company/department"
 
 usr: "henry", url: "customers", structure: "/index"
 
-##KeeperOfficeer
+##KeeperOfficer
 处理User的Resource存取申请
 
 
