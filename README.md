@@ -34,11 +34,11 @@ example 2
 
 访问权限纪录方式
 
-usr: "bill", value: "grandsys", map: "/campany"
+usr: "bill", url: "grandsys", structure: "/campany"
 
-usr: "san", value: "grandys/rd1", map: "/company/department"
+usr: "san", url: "grandys/rd1", structure: "/company/department"
 
-usr: "henry", value: "customers", map: "/index"
+usr: "henry", url: "customers", structure: "/index"
 
 ##KeeperOfficeer
 处理User的Resource存取申请
